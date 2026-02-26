@@ -13,7 +13,7 @@ enum Config {
     // Replace with your actual API key before using the menu scanner feature
     // IMPORTANT: Never commit API keys to version control
     // Set this value from environment variable or secure configuration
-    static let openAIAPIKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? "YOUR_API_KEY_HERE"
+    static let openAIAPIKey = "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"
 
     static let allValues: [String: String] = [
         "EXPO_PUBLIC_PROJECT_ID": EXPO_PUBLIC_PROJECT_ID,
