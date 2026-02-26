@@ -6,17 +6,23 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(lang.t("Food", thai: "อาหาร", japanese: "食事"), systemImage: "fork.knife", value: 0) {
-                FoodTabView()
-            }
+            FoodTabView()
+                .tabItem {
+                    Label(lang.t("Food", thai: "อาหาร", japanese: "食事"), systemImage: "fork.knife")
+                }
+                .tag(0)
 
-            Tab(lang.t("Progress", thai: "ความคืบหน้า", japanese: "進捗"), systemImage: "chart.bar.fill", value: 1) {
-                ProgressTabView()
-            }
+            ProgressTabView()
+                .tabItem {
+                    Label(lang.t("Progress", thai: "ความคืบหน้า", japanese: "進捗"), systemImage: "chart.bar.fill")
+                }
+                .tag(1)
 
-            Tab(lang.t("Settings", thai: "ตั้งค่า", japanese: "設定"), systemImage: "gearshape.fill", value: 2) {
-                SettingsTabView()
-            }
+            SettingsTabView()
+                .tabItem {
+                    Label(lang.t("Settings", thai: "ตั้งค่า", japanese: "設定"), systemImage: "gearshape.fill")
+                }
+                .tag(2)
         }
         .tint(Color(red: 1, green: 0.42, blue: 0.21))
     }
