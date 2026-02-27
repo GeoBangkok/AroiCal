@@ -27,7 +27,7 @@ struct FoodResultSheet: View {
                     VStack(spacing: 0) {
                         Image(uiImage: uiImage)
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: .fit)
                             .frame(width: geometry.size.width, height: geometry.size.height * 0.4)
                             .clipped()
                             .overlay {
