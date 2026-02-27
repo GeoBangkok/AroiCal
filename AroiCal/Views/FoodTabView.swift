@@ -18,6 +18,8 @@ struct FoodTabView: View {
     @State private var errorMessage: String = ""
     @State private var analyzingImageData: Data?
     @State private var showManualEntry: Bool = false
+    @State private var showScanOptions: Bool = false
+    @State private var pendingScanAction: ScanAction? = nil
 
     private var selectedLog: DailyLog? { logManager.logForDate(selectedDate) }
     private var entries: [FoodEntry] { selectedLog?.entries ?? [] }
@@ -105,6 +107,24 @@ struct FoodTabView: View {
                     }
                 }
                 .environment(lang)
+            }
+            .sheet(isPresented: $showScanOptions) {
+                ScanOptionsSheet(lang: lang) { action in
+                    showScanOptions = false
+                    pendingScanAction = action
+                }
+                .presentationDetents([.height(300)])
+                .presentationDragIndicator(.visible)
+            }
+            .onChange(of: showScanOptions) { _, isShowing in
+                guard !isShowing, let action = pendingScanAction else { return }
+                pendingScanAction = nil
+                switch action {
+                case .camera: showCamera = true
+                case .photo:  showPhotoPicker = true
+                case .menu:   showMenuScanner = true
+                case .manual: showManualEntry = true
+                }
             }
             .alert("Analysis Failed", isPresented: $showError) {
                 Button("OK", role: .cancel) { }
@@ -289,129 +309,31 @@ struct FoodTabView: View {
     }
 
     private var scanSection: some View {
-        VStack(spacing: 12) {
-            Button {
-                showCamera = true
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "camera.fill")
-                        .font(.title2)
+        Button {
+            showScanOptions = true
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "camera.viewfinder")
+                    .font(.title2)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lang.t("Scan Food", thai: "สแกนอาหาร", japanese: "食事をスキャン"))
-                            .font(.headline)
+                Text(lang.t("Scan Your Food", thai: "สแกนอาหารของคุณ", japanese: "食事をスキャン"))
+                    .font(.headline)
 
-                        Text(lang.t("Take a photo of your meal", thai: "ถ่ายรูปอาหารของคุณ", japanese: "食事の写真を撮る"))
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
-                    }
+                Spacer()
 
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .foregroundStyle(.white)
-                .padding(20)
-                .background(
-                    LinearGradient(
-                        colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.55, blue: 0.1)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    in: .rect(cornerRadius: 16)
-                )
+                Image(systemName: "chevron.up")
+                    .font(.subheadline.weight(.semibold))
             }
-
-            Button {
-                showPhotoPicker = true
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "photo.on.rectangle")
-                        .font(.title2)
-                        .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lang.t("Upload Photo", thai: "อัปโหลดรูป", japanese: "写真をアップロード"))
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-
-                        Text(lang.t("Choose from gallery", thai: "เลือกจากแกลเลอรี", japanese: "ギャラリーから選ぶ"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(20)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-            }
-
-            // New Scan Menu button
-            Button {
-                showMenuScanner = true
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "doc.text.viewfinder")
-                        .font(.title2)
-                        .foregroundStyle(.green)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lang.t("Scan Menu", thai: "สแกนเมนู", japanese: "メニューをスキャン"))
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-
-                        Text(lang.t("Get AI recommendations", thai: "รับคำแนะนำ AI", japanese: "AIのおすすめを取得"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "sparkles")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.purple)
-                }
-                .padding(20)
-                .background(Color.green.opacity(0.1), in: .rect(cornerRadius: 16))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(Color.green.opacity(0.3), lineWidth: 1)
-                )
-            }
-
-            // Manual Entry button
-            Button {
-                showManualEntry = true
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "pencil.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color(red: 0.35, green: 0.67, blue: 1))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(lang.t("Manual Entry", thai: "บันทึกด้วยตนเอง", japanese: "手動入力"))
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-
-                        Text(lang.t("Enter food details manually", thai: "ป้อนรายละเอียดอาหารด้วยตนเอง", japanese: "手動で詳細を入力"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(20)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-            }
+            .foregroundStyle(.white)
+            .padding(20)
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.55, blue: 0.1)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: .rect(cornerRadius: 16)
+            )
         }
     }
 
@@ -474,6 +396,80 @@ struct FoodTabView: View {
 
         isAnalyzing = false
         analyzingImageData = nil
+    }
+}
+
+// MARK: - Scan action type
+fileprivate enum ScanAction { case camera, photo, menu, manual }
+
+// MARK: - Scan options bottom sheet
+private struct ScanOptionsSheet: View {
+    let lang: LanguageManager
+    let onSelect: (ScanAction) -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text(lang.t("How would you like to scan?", thai: "คุณต้องการสแกนอย่างไร?", japanese: "どのようにスキャンしますか？"))
+                .font(.headline)
+                .padding(.top, 4)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                scanOption(
+                    icon: "camera.fill",
+                    color: Color(red: 1, green: 0.42, blue: 0.21),
+                    title: lang.t("Camera", thai: "กล้อง", japanese: "カメラ"),
+                    subtitle: lang.t("Take a photo", thai: "ถ่ายรูป", japanese: "写真を撮る"),
+                    action: .camera
+                )
+                scanOption(
+                    icon: "photo.on.rectangle",
+                    color: Color(red: 0.35, green: 0.67, blue: 1),
+                    title: lang.t("Gallery", thai: "แกลเลอรี", japanese: "ギャラリー"),
+                    subtitle: lang.t("Upload photo", thai: "อัปโหลดรูป", japanese: "写真をアップ"),
+                    action: .photo
+                )
+                scanOption(
+                    icon: "doc.text.viewfinder",
+                    color: .green,
+                    title: lang.t("Scan Menu", thai: "สแกนเมนู", japanese: "メニュー"),
+                    subtitle: lang.t("AI recommendations", thai: "คำแนะนำ AI", japanese: "AIおすすめ"),
+                    action: .menu
+                )
+                scanOption(
+                    icon: "pencil.circle.fill",
+                    color: Color(red: 0.6, green: 0.4, blue: 1),
+                    title: lang.t("Manual", thai: "บันทึกเอง", japanese: "手動入力"),
+                    subtitle: lang.t("Enter manually", thai: "ป้อนด้วยตนเอง", japanese: "手入力する"),
+                    action: .manual
+                )
+            }
+        }
+        .padding(20)
+    }
+
+    private func scanOption(icon: String, color: Color, title: String, subtitle: String, action: ScanAction) -> some View {
+        Button { onSelect(action) } label: {
+            VStack(spacing: 10) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(color)
+                    .frame(width: 48, height: 48)
+                    .background(color.opacity(0.12), in: .rect(cornerRadius: 12))
+
+                VStack(spacing: 2) {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        }
     }
 }
 
