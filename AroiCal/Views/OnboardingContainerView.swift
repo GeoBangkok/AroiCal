@@ -1,11 +1,12 @@
 import SwiftUI
+import SuperwallKit
 
 struct OnboardingContainerView: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(UserProfileManager.self) private var profileManager
+    @StateObject private var storeManager = StoreManager.shared
     @State private var currentStep: Int = 0
     @State private var profile = UserProfile()
-    @State private var showPaywall: Bool = false
     @State private var showLoading: Bool = false
     @State private var loadingDone: Bool = false
     let onComplete: () -> Void
@@ -22,7 +23,7 @@ struct OnboardingContainerView: View {
             Color(.systemBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if !showPaywall && !showLoading {
+                if !showLoading {
                     HStack {
                         if currentStep > 0 {
                             Button {
@@ -114,7 +115,7 @@ struct OnboardingContainerView: View {
                     .animation(.snappy, value: currentStep)
                 }
 
-                if !showPaywall && !showLoading {
+                if !showLoading {
                     Button {
                         withAnimation(.snappy) {
                             if currentStep == 14 && !loadingDone {
@@ -124,7 +125,8 @@ struct OnboardingContainerView: View {
                             } else if currentStep < 15 {
                                 currentStep += 1
                             } else {
-                                showPaywall = true
+                                // Trigger Superwall paywall at end of onboarding
+                                triggerPaywall()
                             }
                         }
                     } label: {
@@ -147,12 +149,6 @@ struct OnboardingContainerView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showPaywall) {
-            PaywallView {
-                onComplete()
-            }
-            .environment(lang)
-        }
     }
 
     private var buttonText: String {
@@ -160,6 +156,30 @@ struct OnboardingContainerView: View {
             return lang.t("Get Started", thai: "เริ่มต้นใช้งาน", japanese: "始める")
         }
         return lang.t("Continue", thai: "ต่อไป", japanese: "続ける")
+    }
+
+    private func triggerPaywall() {
+        Task {
+            // Register paywall presentation event
+            let paywallInfo = Superwall.shared.register(event: "onboarding_complete")
+
+            switch paywallInfo {
+            case .presented:
+                // Paywall was presented
+                print("Paywall presented")
+            case .skipped(let reason):
+                // Paywall was skipped (user already subscribed or other reason)
+                print("Paywall skipped: \(reason)")
+                // Check if user is subscribed
+                await storeManager.checkSubscriptionStatus()
+                if storeManager.isSubscribed {
+                    onComplete()
+                } else {
+                    // Still allow them through even if they skip
+                    onComplete()
+                }
+            }
+        }
     }
 }
 

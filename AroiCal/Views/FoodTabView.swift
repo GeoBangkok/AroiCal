@@ -1,10 +1,12 @@
 import SwiftUI
 import PhotosUI
+import SuperwallKit
 
 struct FoodTabView: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(UserProfileManager.self) private var profileManager
     @Environment(DailyLogManager.self) private var logManager
+    @StateObject private var storeManager = StoreManager.shared
     @State private var showCamera: Bool = false
     @State private var showPhotoPicker: Bool = false
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -119,11 +121,13 @@ struct FoodTabView: View {
             .onChange(of: showScanOptions) { _, isShowing in
                 guard !isShowing, let action = pendingScanAction else { return }
                 pendingScanAction = nil
-                switch action {
-                case .camera: showCamera = true
-                case .photo:  showPhotoPicker = true
-                case .menu:   showMenuScanner = true
-                case .manual: showManualEntry = true
+
+                // Trigger paywall for AI-powered scans, but not manual entry
+                if action != .manual {
+                    triggerPaywallForScan(action: action)
+                } else {
+                    // Manual entry is always free
+                    showManualEntry = true
                 }
             }
             .alert("Analysis Failed", isPresented: $showError) {
@@ -396,6 +400,42 @@ struct FoodTabView: View {
 
         isAnalyzing = false
         analyzingImageData = nil
+    }
+
+    private func triggerPaywallForScan(action: ScanAction) {
+        Task {
+            // Register paywall event based on scan type
+            let eventName: String
+            switch action {
+            case .camera: eventName = "food_scan_camera"
+            case .photo: eventName = "food_scan_photo"
+            case .menu: eventName = "food_scan_menu"
+            case .manual: return // Manual entry doesn't trigger paywall
+            }
+
+            let paywallInfo = Superwall.shared.register(event: eventName)
+
+            switch paywallInfo {
+            case .presented:
+                // Paywall was presented, wait for user action
+                print("Paywall presented for \(eventName)")
+            case .skipped(let reason):
+                // Paywall skipped (user has subscription or other reason)
+                print("Paywall skipped for \(eventName): \(reason)")
+                // Check subscription status
+                await storeManager.checkSubscriptionStatus()
+
+                // If subscribed or paywall was skipped, proceed with the scan
+                await MainActor.run {
+                    switch action {
+                    case .camera: showCamera = true
+                    case .photo: showPhotoPicker = true
+                    case .menu: showMenuScanner = true
+                    case .manual: break
+                    }
+                }
+            }
+        }
     }
 }
 

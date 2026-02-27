@@ -17,7 +17,7 @@ class StoreManager: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
 
-    // Product IDs based on your Stripe configuration
+    // Product IDs - you'll need to create these in App Store Connect
     private let monthlyProductID = "monthly.AroiCal"
     private let annualProductID = "annual.AroiCal"
 
