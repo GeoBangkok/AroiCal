@@ -77,7 +77,7 @@ class FoodAnalysisService {
         request.timeoutInterval = 30
 
         let body: [String: Any] = [
-            "model": "gpt-5-nano",
+            "model": "gpt-4o-mini",
             "messages": [
                 [
                     "role": "user",
