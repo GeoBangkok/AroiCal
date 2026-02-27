@@ -98,7 +98,8 @@ struct FoodTabView: View {
                 }
             }
             .fullScreenCover(isPresented: $showMenuScanner) {
-                MenuScannerView()
+                MenuScannerChatView()
+                    .environment(lang)
             }
             .sheet(isPresented: $showManualEntry) {
                 ManualFoodEntryView { entry in

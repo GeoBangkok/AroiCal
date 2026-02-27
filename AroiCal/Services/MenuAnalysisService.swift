@@ -43,6 +43,16 @@ class MenuAnalysisService {
         return recommendations
     }
 
+    func analyzeMenuWithRecommendation(image: UIImage, recommendationType: String) async throws -> String {
+        // First, extract text from the image using Vision framework
+        let menuText = try await extractTextFromImage(image)
+
+        // Then send to OpenAI for specific recommendation
+        let recommendation = try await getSpecificRecommendation(menuText: menuText, type: recommendationType)
+
+        return recommendation
+    }
+
     private func extractTextFromImage(_ image: UIImage) async throws -> String {
         guard let cgImage = image.cgImage else {
             throw MenuAnalysisError.invalidImage
@@ -156,6 +166,78 @@ class MenuAnalysisService {
         let recommendations = try JSONDecoder().decode(MenuRecommendations.self, from: jsonData)
 
         return recommendations
+    }
+
+    private func getSpecificRecommendation(menuText: String, type: String) async throws -> String {
+        let recommendationPrompt: String
+        switch type {
+        case "healthiest":
+            recommendationPrompt = "Recommend the 1-2 HEALTHIEST options from this menu. Focus on nutritional value, balanced macros, and overall health benefits."
+        case "tastiest":
+            recommendationPrompt = "Recommend the 1-2 TASTIEST and most satisfying options from this menu. Focus on flavor, satisfaction, and enjoyment."
+        case "protein":
+            recommendationPrompt = "Recommend the 1-2 options with the HIGHEST PROTEIN content from this menu. Ideal for muscle building and satiety."
+        case "fiber":
+            recommendationPrompt = "Recommend the 1-2 options with the most FIBER for better digestion and gut health from this menu."
+        default:
+            recommendationPrompt = "Recommend the best option from this menu."
+        }
+
+        let prompt = """
+        You are a friendly nutritionist and food expert. Analyze this menu and provide a conversational recommendation.
+
+        Menu Text:
+        \(menuText)
+
+        Task: \(recommendationPrompt)
+
+        For each recommendation, include:
+        - Dish name (in bold if possible)
+        - Why it's a great choice
+        - Estimated calories
+        - Key nutrients (protein, carbs, fat, fiber)
+        - Any helpful tips
+
+        Be enthusiastic, conversational, and helpful. Use emojis sparingly. Keep it concise (3-4 sentences per dish max).
+        """
+
+        let requestBody: [String: Any] = [
+            "model": "gpt-4o-mini",
+            "messages": [
+                ["role": "system", "content": "You are a helpful, friendly nutritionist who gives practical food recommendations."],
+                ["role": "user", "content": prompt]
+            ],
+            "max_completion_tokens": 1000
+        ]
+
+        guard let url = URL(string: apiEndpoint) else {
+            throw MenuAnalysisError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
+
+        if let httpResponse = urlResponse as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(OpenAIMenuErrorResponse.self, from: data) {
+                throw MenuAnalysisError.apiErrorMessage(errorResponse.error.message)
+            } else {
+                throw MenuAnalysisError.apiErrorMessage("Server returned status \(httpResponse.statusCode)")
+            }
+        }
+
+        // Parse OpenAI response
+        let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+
+        guard let content = openAIResponse.choices.first?.message.content else {
+            throw MenuAnalysisError.noContent
+        }
+
+        return content
     }
 }
 
