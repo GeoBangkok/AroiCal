@@ -429,32 +429,14 @@ struct FoodTabView: View {
             case .manual: return // Manual entry doesn't trigger paywall
             }
 
-            // Present the paywall and handle the result
-            let result = await Superwall.shared.register(event: eventName)
+            // Register the event - Superwall will decide whether to present paywall
+            print("🔔 Registering event: \(eventName)")
+            Superwall.shared.register(event: eventName)
 
-            switch result {
-            case .presented(let paywallInfo):
-                print("✅ Paywall presented: \(paywallInfo)")
-                // Wait for user to complete or dismiss paywall
-                // Superwall will handle the purchase flow
-
-            case .skipped(let reason):
-                print("⚠️ Paywall skipped: \(reason)")
-                // Check subscription status again in case it changed
-                await storeManager.checkSubscriptionStatus()
-
-                // If now subscribed, proceed with scan
-                if storeManager.isSubscribed {
-                    await MainActor.run {
-                        switch action {
-                        case .camera: showCamera = true
-                        case .photo: showPhotoPicker = true
-                        case .menu: showMenuScanner = true
-                        case .manual: break
-                        }
-                    }
-                }
-            }
+            // After paywall interaction (purchase or dismiss), check subscription
+            // The purchase controller will update subscription status
+            // For now, we let Superwall handle the paywall presentation
+            // Users who subscribe will be able to use features on next attempt
         }
     }
 }

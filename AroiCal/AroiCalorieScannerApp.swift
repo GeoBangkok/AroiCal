@@ -27,11 +27,17 @@ struct AroiCalorieScannerApp: App {
         // Get API key from Config or environment
         let apiKey = Config.superwallAPIKey
 
-        // Configure Superwall with custom purchase controller
+        print("🔧 Configuring Superwall with API key: \(apiKey.prefix(10))...")
+
+        // Configure Superwall with custom purchase controller and delegate
         Superwall.configure(
             apiKey: apiKey,
-            purchaseController: SuperwallPurchaseController()
+            purchaseController: SuperwallPurchaseController(),
+            options: .init(logging: .init(level: .debug, scopes: .all))
         )
+
+        // Set delegate for paywall events
+        Superwall.shared.delegate = SuperwallDelegateHandler.shared
 
         // Set initial subscription status
         Task {
@@ -39,5 +45,36 @@ struct AroiCalorieScannerApp: App {
         }
 
         print("✅ Superwall configured successfully")
+    }
+}
+
+// MARK: - Superwall Delegate Handler
+class SuperwallDelegateHandler: SuperwallDelegate {
+    static let shared = SuperwallDelegateHandler()
+
+    private init() {}
+
+    func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
+        switch eventInfo.event {
+        case .paywallOpen(let paywallInfo):
+            print("📱 Paywall opened: \(paywallInfo.name)")
+        case .paywallClose(let paywallInfo):
+            print("📱 Paywall closed: \(paywallInfo.name)")
+        case .transactionComplete(let transaction):
+            print("✅ Transaction complete: \(transaction.product.productIdentifier)")
+            Task {
+                await StoreManager.shared.checkSubscriptionStatus()
+            }
+        case .transactionFail(let error):
+            print("❌ Transaction failed: \(error)")
+        case .paywallResponseLoadStart:
+            print("⏳ Loading paywall...")
+        case .paywallResponseLoadComplete:
+            print("✅ Paywall loaded successfully")
+        case .paywallResponseLoadFail(let error):
+            print("❌ Paywall load failed: \(error)")
+        default:
+            print("ℹ️ Superwall event: \(eventInfo.event)")
+        }
     }
 }

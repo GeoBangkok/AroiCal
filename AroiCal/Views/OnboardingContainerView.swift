@@ -163,29 +163,18 @@ struct OnboardingContainerView: View {
             // Check if user is already subscribed
             await storeManager.checkSubscriptionStatus()
 
-            if storeManager.isSubscribed {
-                // Already subscribed, skip paywall
-                onComplete()
-                return
-            }
+            // Register the event - Superwall will present paywall if configured
+            print("🔔 Registering onboarding_complete event")
+            Superwall.shared.register(event: "onboarding_complete")
 
-            // Present paywall at end of onboarding
-            let result = await Superwall.shared.register(event: "onboarding_complete")
+            // Allow Superwall to present its paywall
+            // Then continue to main app
+            // The purchase controller will handle subscription updates
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second delay for paywall to show
 
-            switch result {
-            case .presented(let paywallInfo):
-                print("✅ Onboarding paywall presented: \(paywallInfo)")
-                // Paywall was shown - user can subscribe or dismiss
-                // Check subscription status after paywall interaction
-                await storeManager.checkSubscriptionStatus()
-                onComplete()
-
-            case .skipped(let reason):
-                print("⚠️ Onboarding paywall skipped: \(reason)")
-                // Paywall was skipped - check status and continue
-                await storeManager.checkSubscriptionStatus()
-                onComplete()
-            }
+            // Complete onboarding - user can access app even without subscription
+            // Features will be gated individually
+            onComplete()
         }
     }
 }
