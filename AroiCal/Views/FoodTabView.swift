@@ -15,7 +15,6 @@ struct FoodTabView: View {
     @State private var showResult: Bool = false
     @State private var selectedDate: Date = Date()
     @State private var showStreakCard: Bool = false
-    @State private var showMenuScanner: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
     @State private var analyzingImageData: Data?
@@ -96,10 +95,6 @@ struct FoodTabView: View {
                         Task { await analyzeFood(imageData: data) }
                     }
                 }
-            }
-            .fullScreenCover(isPresented: $showMenuScanner) {
-                MenuScannerChatView()
-                    .environment(lang)
             }
             .sheet(isPresented: $showManualEntry) {
                 ManualFoodEntryView { entry in
@@ -414,7 +409,6 @@ struct FoodTabView: View {
                     switch action {
                     case .camera: showCamera = true
                     case .photo: showPhotoPicker = true
-                    case .menu: showMenuScanner = true
                     case .manual: break
                     }
                 }
@@ -426,7 +420,6 @@ struct FoodTabView: View {
             switch action {
             case .camera: eventName = "food_scan_camera"
             case .photo: eventName = "food_scan_photo"
-            case .menu: eventName = "food_scan_menu"
             case .manual: return // Manual entry doesn't trigger paywall
             }
 
@@ -443,7 +436,7 @@ struct FoodTabView: View {
 }
 
 // MARK: - Scan action type
-fileprivate enum ScanAction { case camera, photo, menu, manual }
+fileprivate enum ScanAction { case camera, photo, manual }
 
 // MARK: - Scan options bottom sheet
 private struct ScanOptionsSheet: View {
@@ -470,13 +463,6 @@ private struct ScanOptionsSheet: View {
                     title: lang.t("Gallery", thai: "แกลเลอรี", japanese: "ギャラリー"),
                     subtitle: lang.t("Upload photo", thai: "อัปโหลดรูป", japanese: "写真をアップ"),
                     action: .photo
-                )
-                scanOption(
-                    icon: "doc.text.viewfinder",
-                    color: .green,
-                    title: lang.t("Scan Menu", thai: "สแกนเมนู", japanese: "メニュー"),
-                    subtitle: lang.t("AI recommendations", thai: "คำแนะนำ AI", japanese: "AIおすすめ"),
-                    action: .menu
                 )
                 scanOption(
                     icon: "pencil.circle.fill",
