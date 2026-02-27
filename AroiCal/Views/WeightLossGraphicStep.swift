@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WeightLossGraphicStep: View {
     @Environment(LanguageManager.self) private var lang
+    let name: String
     @State private var animateChart: Bool = false
     @State private var showStats: Bool = false
 
@@ -15,7 +16,9 @@ struct WeightLossGraphicStep: View {
                 VStack(spacing: 8) {
                     AroiCalHeader()
 
-                    Text(lang.t("The Aroi Cal Difference", thai: "ความแตกต่างของ Aroi Cal", japanese: "Aroi Calの違い"))
+                    Text(name.isEmpty
+                         ? lang.t("The Aroi Cal Difference", thai: "ความแตกต่างของ Aroi Cal", japanese: "Aroi Calの違い")
+                         : lang.t("\(name)'s Path to Success", thai: "เส้นทางสู่ความสำเร็จของ\(name)", japanese: "\(name)さんの成功への道"))
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 

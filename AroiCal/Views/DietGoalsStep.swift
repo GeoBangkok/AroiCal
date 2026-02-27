@@ -21,7 +21,9 @@ struct DietGoalsStep: View {
                 VStack(spacing: 8) {
                     AroiCalHeader()
 
-                    Text(lang.t("What's Your Main Goal?", thai: "เป้าหมายหลักของคุณคืออะไร?", japanese: "あなたのメインゴールは？"))
+                    Text(firstName.isEmpty
+                         ? lang.t("What's Your Main Goal?", thai: "เป้าหมายหลักของคุณคืออะไร?", japanese: "あなたのメインゴールは？")
+                         : lang.t("What's \(firstName)'s Main Goal?", thai: "เป้าหมายหลักของ\(firstName)คืออะไร?", japanese: "\(firstName)さんのメインゴールは？"))
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 
@@ -94,5 +96,10 @@ struct DietGoalsStep: View {
                 Spacer(minLength: 100)
             }
         }
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

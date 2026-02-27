@@ -4,6 +4,10 @@ struct PersonalizedPlanStep: View {
     @Environment(LanguageManager.self) private var lang
     let profile: UserProfile
 
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
+    }
     private var calories: Int { profile.calculateTDEE() }
     private var macros: (protein: Int, carbs: Int, fat: Int) { profile.calculateMacros() }
     private var weightDiff: Double { abs(profile.weightKg - profile.desiredWeightKg) }
@@ -20,7 +24,9 @@ struct PersonalizedPlanStep: View {
                         .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
                         .symbolEffect(.bounce, value: true)
 
-                    Text(lang.t("Your Plan is Ready!", thai: "แผนของคุณพร้อมแล้ว!", japanese: "プランが完成しました！"))
+                    Text(firstName.isEmpty
+                         ? lang.t("Your Plan is Ready!", thai: "แผนของคุณพร้อมแล้ว!", japanese: "プランが完成しました！")
+                         : lang.t("\(firstName)'s Plan is Ready!", thai: "แผนของ\(firstName)พร้อมแล้ว!", japanese: "\(firstName)さんのプランが完成しました！"))
                         .font(.title.bold())
 
                     Text(lang.t("Based on your profile, here's your daily target", thai: "จากข้อมูลของคุณ นี่คือเป้าหมายรายวัน", japanese: "あなたのプロフィールに基づく毎日の目標"))

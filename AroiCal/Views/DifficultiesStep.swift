@@ -23,7 +23,9 @@ struct DifficultiesStep: View {
                 VStack(spacing: 8) {
                     AroiCalHeader()
 
-                    Text(lang.t("What's Holding You Back?", thai: "อะไรที่ถ่วงคุณอยู่?", japanese: "何が障壁ですか？"))
+                    Text(firstName.isEmpty
+                         ? lang.t("What's Holding You Back?", thai: "อะไรที่ถ่วงคุณอยู่?", japanese: "何が障壁ですか？")
+                         : lang.t("What's Holding You Back, \(firstName)?", thai: "อะไรที่ถ่วง\(firstName)อยู่?", japanese: "\(firstName)さんの障壁は？"))
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 
@@ -85,5 +87,10 @@ struct DifficultiesStep: View {
                 Spacer(minLength: 100)
             }
         }
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

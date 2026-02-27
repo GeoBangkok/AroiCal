@@ -10,7 +10,9 @@ struct DesiredWeightStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("Goal Weight", thai: "น้ำหนักเป้าหมาย", japanese: "目標体重"))
+                Text(firstName.isEmpty
+                     ? lang.t("Goal Weight", thai: "น้ำหนักเป้าหมาย", japanese: "目標体重")
+                     : lang.t("\(firstName)'s Goal Weight", thai: "น้ำหนักเป้าหมายของ\(firstName)", japanese: "\(firstName)さんの目標体重"))
                     .font(.title.bold())
                 Text(lang.t("What weight do you want to reach?", thai: "คุณต้องการน้ำหนักเท่าไหร่?", japanese: "目標の体重は？"))
                     .font(.subheadline)
@@ -66,5 +68,10 @@ struct DesiredWeightStep: View {
         }
         .padding(.horizontal, 24)
         .sensoryFeedback(.selection, trigger: Int(profile.desiredWeightKg * 2))
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

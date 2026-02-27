@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GoalsGraphicStep: View {
     @Environment(LanguageManager.self) private var lang
+    let name: String
     @State private var animateIn: Bool = false
 
     var body: some View {
@@ -10,7 +11,9 @@ struct GoalsGraphicStep: View {
                 VStack(spacing: 8) {
                     AroiCalHeader()
 
-                    Text(lang.t("Your Unique Mix", thai: "สูตรเฉพาะของคุณ", japanese: "あなただけのミックス"))
+                    Text(name.isEmpty
+                         ? lang.t("Your Unique Mix", thai: "สูตรเฉพาะของคุณ", japanese: "あなただけのミックス")
+                         : lang.t("\(name)'s Unique Mix", thai: "สูตรเฉพาะของ\(name)", japanese: "\(name)さんだけのミックス"))
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 

@@ -9,7 +9,9 @@ struct ActivityGoalStep: View {
             VStack(spacing: 28) {
                 VStack(spacing: 8) {
                     AroiCalHeader()
-                    Text(lang.t("Activity & Goal", thai: "กิจกรรมและเป้าหมาย", japanese: "活動と目標"))
+                    Text(firstName.isEmpty
+                         ? lang.t("Activity & Goal", thai: "กิจกรรมและเป้าหมาย", japanese: "活動と目標")
+                         : lang.t("\(firstName)'s Activity & Goal", thai: "กิจกรรมและเป้าหมายของ\(firstName)", japanese: "\(firstName)さんの活動と目標"))
                         .font(.title.bold())
 
                     Text(lang.t("Help us personalize your plan", thai: "ช่วยเราปรับแต่งแผนของคุณ", japanese: "プランをカスタマイズします"))
@@ -162,5 +164,10 @@ struct ActivityGoalStep: View {
         case .maintain: return lang.t("Maintain\nWeight", thai: "รักษา\nน้ำหนัก", japanese: "維持")
         case .gain: return lang.t("Gain\nWeight", thai: "เพิ่ม\nน้ำหนัก", japanese: "増量")
         }
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

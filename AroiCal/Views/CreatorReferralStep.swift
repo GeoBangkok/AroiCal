@@ -22,7 +22,9 @@ struct CreatorReferralStep: View {
                         )
                         .padding(.bottom, 4)
 
-                    Text(lang.t("Who Sent You?", thai: "ใครแนะนำคุณมา?", japanese: "誰に紹介されましたか？"))
+                    Text(firstName.isEmpty
+                         ? lang.t("Who Sent You?", thai: "ใครแนะนำคุณมา?", japanese: "誰に紹介されましたか？")
+                         : lang.t("Who Sent You, \(firstName)?", thai: "ใครแนะนำ\(firstName)มา?", japanese: "\(firstName)さん、誰に紹介されましたか？"))
                         .font(.title.bold())
                         .multilineTextAlignment(.center)
 
@@ -85,5 +87,10 @@ struct CreatorReferralStep: View {
             }
         }
         .scrollDismissesKeyboard(.interactively)
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

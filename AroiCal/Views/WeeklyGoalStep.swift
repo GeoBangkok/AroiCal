@@ -10,7 +10,9 @@ struct WeeklyGoalStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("Weekly Goal", thai: "เป้าหมายรายสัปดาห์", japanese: "週間目標"))
+                Text(firstName.isEmpty
+                     ? lang.t("Weekly Goal", thai: "เป้าหมายรายสัปดาห์", japanese: "週間目標")
+                     : lang.t("\(firstName)'s Weekly Goal", thai: "เป้าหมายรายสัปดาห์ของ\(firstName)", japanese: "\(firstName)さんの週間目標"))
                     .font(.title.bold())
                 Text(lang.t("How fast do you want to progress?", thai: "คุณต้องการก้าวหน้าเร็วแค่ไหน?", japanese: "どのくらいのペースで進めたいですか？"))
                     .font(.subheadline)
@@ -76,5 +78,10 @@ struct WeeklyGoalStep: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 16)
         .background(.ultraThinMaterial, in: .capsule)
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

@@ -4,6 +4,7 @@ import UserNotifications
 struct NotificationsStep: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(NotificationsManager.self) private var notifications
+    let name: String
     @State private var animateBell: Bool = false
 
     var body: some View {
@@ -42,7 +43,9 @@ struct NotificationsStep: View {
                 }
 
                 VStack(spacing: 8) {
-                    Text(lang.t("Stay On Track", thai: "ติดตามผลอย่างต่อเนื่อง", japanese: "トラックを維持"))
+                    Text(name.isEmpty
+                         ? lang.t("Stay On Track", thai: "ติดตามผลอย่างต่อเนื่อง", japanese: "トラックを維持")
+                         : lang.t("Stay On Track, \(name)!", thai: "ติดตามผลอย่างต่อเนื่อง \(name)!", japanese: "\(name)さん、続けましょう！"))
                         .font(.title.bold())
 
                     Text(lang.t("Get reminders to log your meals and celebrate your streaks!", thai: "รับการแจ้งเตือนให้บันทึกมื้ออาหารและฉลองสตรีคของคุณ!", japanese: "食事記録のリマインダーとストリークのお祝いを受け取ろう！"))
