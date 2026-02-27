@@ -163,7 +163,10 @@ struct LoginView: View {
     }
 
     private func setupPlayer() {
-        guard let url = Bundle.main.url(forResource: "HeroVideo", withExtension: "mp4") else { return }
+        guard let url = Bundle.main.url(forResource: "Video", withExtension: "mp4") else {
+            print("Video asset not found")
+            return
+        }
         let item = AVPlayerItem(url: url)
         let avPlayer = AVPlayer(playerItem: item)
         avPlayer.isMuted = true
