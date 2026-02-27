@@ -20,6 +20,8 @@ Pods/
 # Swift Package Manager
 .build/
 .swiftpm/
+# But DO track Package.resolved for SPM dependencies
+!*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
 
 # OS Files
 .DS_Store

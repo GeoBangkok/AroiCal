@@ -75,6 +75,8 @@ open AroiCal.xcodeproj
 - **SwiftUI**: Modern iOS UI framework
 - **Vision Framework**: OCR for text extraction from menus
 - **OpenAI GPT-4o mini**: Fast, affordable AI model for food analysis
+- **StoreKit 2**: Native subscription management
+- **Superwall**: Paywall analytics and optimization
 - **Core Data**: Local data persistence
 
 ## Security Note
