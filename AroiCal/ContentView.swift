@@ -23,4 +23,12 @@ struct ContentView: View {
             }
         }
     }
+    .onChange(of: hasCompletedOnboarding) { _, newValue in
+        // When onboarding is reset (delete account), return to login
+        if !newValue {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                showLogin = true
+            }
+        }
+    }
 }

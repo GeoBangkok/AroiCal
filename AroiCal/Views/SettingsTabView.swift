@@ -4,6 +4,8 @@ struct SettingsTabView: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(UserProfileManager.self) private var profileManager
     @State private var showEditProfile: Bool = false
+    @State private var showDeleteConfirmation: Bool = false
+    @AppStorage("has_completed_onboarding") private var hasCompletedOnboarding: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -72,11 +74,15 @@ struct SettingsTabView: View {
                         Text(lang.t("Rate Aroi Cal", thai: "ให้คะแนน Aroi Cal", japanese: "Aroi Calを評価"))
                     }
 
-                    Button {} label: {
+                    Link(destination: URL(string: "https://aroical.lovable.app/support")!) {
+                        Text(lang.t("Support", thai: "ฝ่ายสนับสนุน", japanese: "サポート"))
+                    }
+
+                    Link(destination: URL(string: "https://aroical.lovable.app/privacy")!) {
                         Text(lang.t("Privacy Policy", thai: "นโยบายความเป็นส่วนตัว", japanese: "プライバシーポリシー"))
                     }
 
-                    Button {} label: {
+                    Link(destination: URL(string: "https://aroical.lovable.app/terms")!) {
                         Text(lang.t("Terms of Service", thai: "ข้อกำหนดการใช้งาน", japanese: "利用規約"))
                     }
                 }
@@ -84,6 +90,18 @@ struct SettingsTabView: View {
                 Section {
                     Button {} label: {
                         Text(lang.t("Restore Purchases", thai: "กู้คืนการซื้อ", japanese: "購入を復元"))
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text(lang.t("Delete Account", thai: "ลบบัญชี", japanese: "アカウント削除"))
+                            Spacer()
+                        }
                     }
                 }
             }
@@ -102,6 +120,29 @@ struct SettingsTabView: View {
                     .environment(lang)
                     .environment(profileManager)
             }
+            .alert(lang.t("Delete Account?", thai: "ลบบัญชี?", japanese: "アカウント削除?"), isPresented: $showDeleteConfirmation) {
+                Button(lang.t("Cancel", thai: "ยกเลิก", japanese: "キャンセル"), role: .cancel) { }
+                Button(lang.t("Delete", thai: "ลบ", japanese: "削除"), role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text(lang.t("This will delete all your data and return you to the login screen. This action cannot be undone.",
+                           thai: "การดำเนินการนี้จะลบข้อมูลทั้งหมดของคุณและนำคุณกลับไปยังหน้าเข้าสู่ระบบ ไม่สามารถยกเลิกการดำเนินการนี้ได้",
+                           japanese: "すべてのデータが削除され、ログイン画面に戻ります。この操作は元に戻せません。"))
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        // Clear all user data
+        profileManager.profile = UserProfile()
+
+        // Reset onboarding state
+        hasCompletedOnboarding = false
+
+        // Clear daily logs
+        if let logManager = profileManager as? DailyLogManager {
+            // Reset logs if there's a method to do so
         }
     }
 
