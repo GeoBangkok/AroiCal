@@ -161,24 +161,13 @@ struct OnboardingContainerView: View {
     private func triggerPaywall() {
         Task {
             // Register paywall presentation event
-            let paywallInfo = Superwall.shared.register(event: "onboarding_complete")
+            Superwall.shared.register(event: "onboarding_complete")
 
-            switch paywallInfo {
-            case .presented:
-                // Paywall was presented
-                print("Paywall presented")
-            case .skipped(let reason):
-                // Paywall was skipped (user already subscribed or other reason)
-                print("Paywall skipped: \(reason)")
-                // Check if user is subscribed
-                await storeManager.checkSubscriptionStatus()
-                if storeManager.isSubscribed {
-                    onComplete()
-                } else {
-                    // Still allow them through even if they skip
-                    onComplete()
-                }
-            }
+            // Check if user is subscribed
+            await storeManager.checkSubscriptionStatus()
+
+            // Complete onboarding regardless of subscription status
+            onComplete()
         }
     }
 }
