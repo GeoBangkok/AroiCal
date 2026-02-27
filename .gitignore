@@ -1,0 +1,26 @@
+# Environment variables
+.env
+.env.local
+
+# API Keys and secrets
+*.key
+*.pem
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# OS Files
+.DS_Store
+Thumbs.db
