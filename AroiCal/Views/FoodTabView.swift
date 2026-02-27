@@ -16,6 +16,7 @@ struct FoodTabView: View {
     @State private var showMenuScanner: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
+    @State private var analyzingImageData: Data?
 
     private var selectedLog: DailyLog? { logManager.logForDate(selectedDate) }
     private var entries: [FoodEntry] { selectedLog?.entries ?? [] }
@@ -101,7 +102,7 @@ struct FoodTabView: View {
             }
             .overlay {
                 if isAnalyzing {
-                    AnalyzingOverlay(lang: lang)
+                    AnalyzingOverlay(lang: lang, imageData: analyzingImageData)
                 }
             }
         }
@@ -418,6 +419,7 @@ struct FoodTabView: View {
     }
 
     private func analyzeFood(imageData: Data) async {
+        analyzingImageData = imageData
         isAnalyzing = true
         let service = FoodAnalysisService()
 
@@ -431,6 +433,7 @@ struct FoodTabView: View {
         }
 
         isAnalyzing = false
+        analyzingImageData = nil
     }
 }
 
@@ -597,22 +600,103 @@ struct FoodEntryCard: View {
 
 struct AnalyzingOverlay: View {
     let lang: LanguageManager
+    var imageData: Data? = nil
+
+    @State private var shimmerX: CGFloat = -180
+    @State private var progressValue: Double = 0
+    @State private var pulseScale: CGFloat = 1.0
+
+    private let ringSize: CGFloat = 168
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4).ignoresSafeArea()
+            Color.black.opacity(0.55).ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .tint(Color(red: 1, green: 0.42, blue: 0.21))
+            VStack(spacing: 24) {
+                ZStack {
+                    if let data = imageData, let uiImage = UIImage(data: data) {
+                        // Food image with shimmer
+                        ZStack {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: ringSize, height: ringSize)
+                                .clipShape(Circle())
+                                .scaleEffect(pulseScale)
 
-                Text(lang.t("Analyzing your food...", thai: "กำลังวิเคราะห์อาหาร...", japanese: "食べ物を分析中..."))
-                    .font(.headline)
-                    .foregroundStyle(.white)
+                            // Shimmer sweep
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.clear, .white.opacity(0.35), .clear],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: ringSize, height: ringSize)
+                                .offset(x: shimmerX)
+                                .clipShape(Circle())
+                        }
+                    } else {
+                        // Fallback icon
+                        Circle()
+                            .fill(Color(red: 1, green: 0.42, blue: 0.21).opacity(0.18))
+                            .frame(width: ringSize, height: ringSize)
+                            .overlay {
+                                Image(systemName: "fork.knife.circle.fill")
+                                    .font(.system(size: 56))
+                                    .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+                                    .scaleEffect(pulseScale)
+                            }
+                    }
+
+                    // Progress ring
+                    Circle()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 5)
+                        .frame(width: ringSize + 14, height: ringSize + 14)
+
+                    Circle()
+                        .trim(from: 0, to: progressValue)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.72, blue: 0)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 5, lineCap: .round)
+                        )
+                        .frame(width: ringSize + 14, height: ringSize + 14)
+                        .rotationEffect(.degrees(-90))
+                }
+
+                VStack(spacing: 6) {
+                    Text(lang.t("Analyzing your food...", thai: "กำลังวิเคราะห์อาหาร...", japanese: "食べ物を分析中..."))
+                        .font(.headline)
+                        .foregroundStyle(.white)
+
+                    Text("\(Int(progressValue * 100))%")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundStyle(Color(red: 1, green: 0.72, blue: 0))
+                        .contentTransition(.numericText())
+                        .animation(.easeInOut, value: progressValue)
+                }
             }
-            .padding(40)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 24))
+            .padding(36)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 28))
+        }
+        .onAppear {
+            // Shimmer sweep — repeats
+            withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
+                shimmerX = 180
+            }
+            // Progress ring fills to ~88%
+            withAnimation(.easeInOut(duration: 3.0)) {
+                progressValue = 0.88
+            }
+            // Gentle image pulse
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                pulseScale = 1.04
+            }
         }
     }
 }

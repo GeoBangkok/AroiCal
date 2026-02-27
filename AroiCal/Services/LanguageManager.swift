@@ -20,9 +20,8 @@ class LanguageManager {
 
     private static func detectDeviceLanguage() -> AppLanguage {
         let preferred = Locale.preferredLanguages.first ?? "en"
-        if preferred.hasPrefix("th") { return .thai }
         if preferred.hasPrefix("ja") { return .japanese }
-        return .english
+        return .thai
     }
 
     func cycleLanguage() {
