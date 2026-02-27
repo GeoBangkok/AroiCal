@@ -160,14 +160,32 @@ struct OnboardingContainerView: View {
 
     private func triggerPaywall() {
         Task {
-            // Register paywall presentation event
-            Superwall.shared.register(placement: "onboarding_complete")
-
-            // Check if user is subscribed
+            // Check if user is already subscribed
             await storeManager.checkSubscriptionStatus()
 
-            // Complete onboarding regardless of subscription status
-            onComplete()
+            if storeManager.isSubscribed {
+                // Already subscribed, skip paywall
+                onComplete()
+                return
+            }
+
+            // Present paywall at end of onboarding
+            let result = await Superwall.shared.register(event: "onboarding_complete")
+
+            switch result {
+            case .presented(let paywallInfo):
+                print("✅ Onboarding paywall presented: \(paywallInfo)")
+                // Paywall was shown - user can subscribe or dismiss
+                // Check subscription status after paywall interaction
+                await storeManager.checkSubscriptionStatus()
+                onComplete()
+
+            case .skipped(let reason):
+                print("⚠️ Onboarding paywall skipped: \(reason)")
+                // Paywall was skipped - check status and continue
+                await storeManager.checkSubscriptionStatus()
+                onComplete()
+            }
         }
     }
 }

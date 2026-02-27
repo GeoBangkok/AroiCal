@@ -404,7 +404,23 @@ struct FoodTabView: View {
 
     private func triggerPaywallForScan(action: ScanAction) {
         Task {
-            // Register paywall event based on scan type
+            // Check subscription status first
+            await storeManager.checkSubscriptionStatus()
+
+            // If already subscribed, proceed directly
+            if storeManager.isSubscribed {
+                await MainActor.run {
+                    switch action {
+                    case .camera: showCamera = true
+                    case .photo: showPhotoPicker = true
+                    case .menu: showMenuScanner = true
+                    case .manual: break
+                    }
+                }
+                return
+            }
+
+            // Not subscribed - show paywall based on scan type
             let eventName: String
             switch action {
             case .camera: eventName = "food_scan_camera"
@@ -413,19 +429,29 @@ struct FoodTabView: View {
             case .manual: return // Manual entry doesn't trigger paywall
             }
 
-            Superwall.shared.register(placement: eventName)
+            // Present the paywall and handle the result
+            let result = await Superwall.shared.register(event: eventName)
 
-            // Check subscription status
-            await storeManager.checkSubscriptionStatus()
+            switch result {
+            case .presented(let paywallInfo):
+                print("✅ Paywall presented: \(paywallInfo)")
+                // Wait for user to complete or dismiss paywall
+                // Superwall will handle the purchase flow
 
-            // If subscribed, proceed with the scan
-            if storeManager.isSubscribed {
-                await MainActor.run {
-                    switch action {
-                    case .camera: showCamera = true
-                    case .photo: showPhotoPicker = true
-                    case .menu: showMenuScanner = true
-                    case .manual: break
+            case .skipped(let reason):
+                print("⚠️ Paywall skipped: \(reason)")
+                // Check subscription status again in case it changed
+                await storeManager.checkSubscriptionStatus()
+
+                // If now subscribed, proceed with scan
+                if storeManager.isSubscribed {
+                    await MainActor.run {
+                        switch action {
+                        case .camera: showCamera = true
+                        case .photo: showPhotoPicker = true
+                        case .menu: showMenuScanner = true
+                        case .manual: break
+                        }
                     }
                 }
             }
