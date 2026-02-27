@@ -165,7 +165,7 @@ struct OnboardingContainerView: View {
 
             // Register the event - Superwall will present paywall if configured
             print("🔔 Registering onboarding_complete event")
-            Superwall.shared.register(event: "onboarding_complete")
+            Superwall.shared.register(placement: "onboarding_complete")
 
             // Allow Superwall to present its paywall
             // Then continue to main app

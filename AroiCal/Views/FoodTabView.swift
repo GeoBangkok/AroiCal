@@ -431,7 +431,7 @@ struct FoodTabView: View {
 
             // Register the event - Superwall will decide whether to present paywall
             print("🔔 Registering event: \(eventName)")
-            Superwall.shared.register(event: eventName)
+            Superwall.shared.register(placement: eventName)
 
             // After paywall interaction (purchase or dismiss), check subscription
             // The purchase controller will update subscription status

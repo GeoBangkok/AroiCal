@@ -29,11 +29,10 @@ struct AroiCalorieScannerApp: App {
 
         print("🔧 Configuring Superwall with API key: \(apiKey.prefix(10))...")
 
-        // Configure Superwall with custom purchase controller and delegate
+        // Configure Superwall with custom purchase controller
         Superwall.configure(
             apiKey: apiKey,
-            purchaseController: SuperwallPurchaseController(),
-            options: .init(logging: .init(level: .debug, scopes: .all))
+            purchaseController: SuperwallPurchaseController()
         )
 
         // Set delegate for paywall events
