@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import UIKit
 
 struct CameraProxyView: View {
     @Environment(\.dismiss) private var dismiss
@@ -10,12 +11,51 @@ struct CameraProxyView: View {
             #if targetEnvironment(simulator)
             CameraUnavailablePlaceholder { dismiss() }
             #else
-            if AVCaptureDevice.default(for: .video) != nil {
-                CameraUnavailablePlaceholder { dismiss() }
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                CameraCaptureView(onCapture: onCapture)
+                    .ignoresSafeArea()
             } else {
                 CameraUnavailablePlaceholder { dismiss() }
             }
             #endif
+        }
+    }
+}
+
+struct CameraCaptureView: UIViewControllerRepresentable {
+    let onCapture: (Data?) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraCaptureView
+
+        init(_ parent: CameraCaptureView) {
+            self.parent = parent
+        }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                let data = image.jpegData(compressionQuality: 0.8)
+                parent.onCapture(data)
+            } else {
+                parent.onCapture(nil)
+            }
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.onCapture(nil)
         }
     }
 }
@@ -44,7 +84,7 @@ struct CameraUnavailablePlaceholder: View {
                     Text("Camera Preview")
                         .font(.title2.weight(.semibold))
 
-                    Text("Install this app on your device\nvia the Rork App to use the camera.")
+                    Text("Camera is not available on this device.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
