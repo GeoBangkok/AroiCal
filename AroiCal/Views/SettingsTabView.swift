@@ -88,6 +88,12 @@ struct SettingsTabView: View {
                 }
 
                 Section {
+                    Button {
+                        openSubscriptionManagement()
+                    } label: {
+                        Text(lang.t("Manage Subscription", thai: "จัดการการสมัครสมาชิก", japanese: "サブスク管理"))
+                    }
+
                     Button {} label: {
                         Text(lang.t("Restore Purchases", thai: "กู้คืนการซื้อ", japanese: "購入を復元"))
                     }
@@ -130,6 +136,12 @@ struct SettingsTabView: View {
                            thai: "การดำเนินการนี้จะลบข้อมูลทั้งหมดของคุณและนำคุณกลับไปยังหน้าเข้าสู่ระบบ ไม่สามารถยกเลิกการดำเนินการนี้ได้",
                            japanese: "すべてのデータが削除され、ログイン画面に戻ります。この操作は元に戻せません。"))
             }
+        }
+    }
+
+    private func openSubscriptionManagement() {
+        if let url = URL(string: "https://apps.apple.com/account/subscriptions") {
+            UIApplication.shared.open(url)
         }
     }
 
