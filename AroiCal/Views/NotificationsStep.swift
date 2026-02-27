@@ -3,8 +3,8 @@ import UserNotifications
 
 struct NotificationsStep: View {
     @Environment(LanguageManager.self) private var lang
+    @Environment(NotificationsManager.self) private var notifications
     @State private var animateBell: Bool = false
-    @State private var permissionGranted: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,7 +29,7 @@ struct NotificationsStep: View {
                         )
                         .frame(width: 160, height: 160)
 
-                    Image(systemName: permissionGranted ? "bell.badge.fill" : "bell.fill")
+                    Image(systemName: notifications.isPermissionGranted ? "bell.badge.fill" : "bell.fill")
                         .font(.system(size: 64))
                         .foregroundStyle(
                             LinearGradient(
@@ -58,15 +58,15 @@ struct NotificationsStep: View {
             VStack(spacing: 16) {
                 notificationPreview(
                     icon: "fork.knife",
-                    title: lang.t("Time to log lunch! 🍜", thai: "ถึงเวลาบันทึกมื้อกลางวัน! 🍜", japanese: "ランチを記録しよう！🍜"),
-                    subtitle: lang.t("Don't forget to scan your meal", thai: "อย่าลืมสแกนมื้ออาหารของคุณ", japanese: "食事のスキャンを忘れずに"),
-                    time: "12:30 PM"
+                    title: lang.t("Time to log lunch! 🍜", thai: "มื้อกลางวันมาแล้ว! 🍜", japanese: "ランチタイム！🍜"),
+                    subtitle: lang.t("Point, snap, and let AI do the math!", thai: "กินอะไรเที่ยงนี้? ถ่ายรูปแล้วให้ AI คำนวณแคลให้เลย 📸", japanese: "撮影してカロリーをチェック！📸"),
+                    time: "12:00 PM"
                 )
 
                 notificationPreview(
-                    icon: "flame.fill",
-                    title: lang.t("5 Day Streak! 🔥", thai: "สตรีค 5 วัน! 🔥", japanese: "5日連続！🔥"),
-                    subtitle: lang.t("You're on fire! Keep going", thai: "คุณทำได้เยี่ยม! ไปต่อเลย", japanese: "絶好調！続けよう"),
+                    icon: "sun.horizon.fill",
+                    title: lang.t("Good morning! ☀️", thai: "สวัสดีตอนเช้า! ☀️", japanese: "おはよう！☀️"),
+                    subtitle: lang.t("Start strong — snap your breakfast!", thai: "เริ่มวันใหม่ด้วยการบันทึกมื้อเช้า 🍳", japanese: "朝食を記録して1日をスタート！🍳"),
                     time: "8:00 AM"
                 )
             }
@@ -74,9 +74,10 @@ struct NotificationsStep: View {
 
             Spacer()
 
-            if !permissionGranted {
+            if !notifications.isPermissionGranted {
                 Button {
-                    requestNotificationPermission()
+                    notifications.requestAndSchedule(language: lang.current)
+                    withAnimation(.spring) { animateBell = true }
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "bell.badge")
@@ -115,6 +116,7 @@ struct NotificationsStep: View {
         .task {
             try? await Task.sleep(for: .milliseconds(500))
             animateBell = true
+            notifications.checkStatus()
         }
     }
 
@@ -156,16 +158,5 @@ struct NotificationsStep: View {
         }
         .padding(12)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-    }
-
-    private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            Task { @MainActor in
-                withAnimation(.spring) {
-                    permissionGranted = granted
-                    animateBell = true
-                }
-            }
-        }
     }
 }
