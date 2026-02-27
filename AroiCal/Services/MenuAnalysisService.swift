@@ -107,7 +107,7 @@ class MenuAnalysisService {
         """
 
         let requestBody: [String: Any] = [
-            "model": "gpt-4o-mini",
+            "model": "gpt-5-nano",
             "messages": [
                 ["role": "system", "content": "You are a helpful nutritionist and food expert."],
                 ["role": "user", "content": prompt]
