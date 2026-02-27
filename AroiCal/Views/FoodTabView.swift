@@ -413,7 +413,7 @@ struct FoodTabView: View {
             case .manual: return // Manual entry doesn't trigger paywall
             }
 
-            Superwall.shared.register(event: eventName)
+            Superwall.shared.register(placement: eventName)
 
             // Check subscription status
             await storeManager.checkSubscriptionStatus()

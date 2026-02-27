@@ -161,7 +161,7 @@ struct OnboardingContainerView: View {
     private func triggerPaywall() {
         Task {
             // Register paywall presentation event
-            Superwall.shared.register(event: "onboarding_complete")
+            Superwall.shared.register(placement: "onboarding_complete")
 
             // Check if user is subscribed
             await storeManager.checkSubscriptionStatus()
