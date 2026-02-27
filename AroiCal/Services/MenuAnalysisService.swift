@@ -107,7 +107,7 @@ class MenuAnalysisService {
         """
 
         let requestBody: [String: Any] = [
-            "model": "gpt-4o-mini",
+            "model": "gpt-5-nano",
             "messages": [
                 ["role": "system", "content": "You are a helpful nutritionist and food expert."],
                 ["role": "user", "content": prompt]
@@ -126,11 +126,14 @@ class MenuAnalysisService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
 
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw MenuAnalysisError.apiError
+        if let httpResponse = urlResponse as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            if let errorResponse = try? JSONDecoder().decode(OpenAIMenuErrorResponse.self, from: data) {
+                throw MenuAnalysisError.apiErrorMessage(errorResponse.error.message)
+            } else {
+                throw MenuAnalysisError.apiErrorMessage("Server returned status \(httpResponse.statusCode)")
+            }
         }
 
         // Parse OpenAI response
@@ -140,8 +143,14 @@ class MenuAnalysisService {
             throw MenuAnalysisError.noContent
         }
 
+        // Strip markdown code fences if present
+        let cleaned = content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Parse the JSON content from the response
-        guard let jsonData = content.data(using: .utf8) else {
+        guard let jsonData = cleaned.data(using: .utf8) else {
             throw MenuAnalysisError.invalidJSON
         }
 
@@ -164,12 +173,22 @@ private struct Message: Codable {
     let content: String
 }
 
+private struct OpenAIMenuErrorResponse: Codable {
+    struct OpenAIError: Codable {
+        let message: String
+        let type: String?
+        let code: String?
+    }
+    let error: OpenAIError
+}
+
 // Error types
 enum MenuAnalysisError: LocalizedError {
     case invalidImage
     case textExtractionFailed
     case invalidURL
     case apiError
+    case apiErrorMessage(String)
     case noContent
     case invalidJSON
 
@@ -183,6 +202,8 @@ enum MenuAnalysisError: LocalizedError {
             return "Invalid API endpoint"
         case .apiError:
             return "API request failed"
+        case .apiErrorMessage(let message):
+            return "API Error: \(message)"
         case .noContent:
             return "No recommendations received"
         case .invalidJSON:
@@ -190,4 +211,3 @@ enum MenuAnalysisError: LocalizedError {
         }
     }
 }
-

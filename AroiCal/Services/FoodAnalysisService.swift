@@ -43,6 +43,15 @@ nonisolated struct OpenAIChatResponse: Codable, Sendable {
     let choices: [Choice]
 }
 
+private struct OpenAIErrorResponse: Codable {
+    struct OpenAIError: Codable {
+        let message: String
+        let type: String?
+        let code: String?
+    }
+    let error: OpenAIError
+}
+
 @MainActor
 class FoodAnalysisService {
 
@@ -61,30 +70,43 @@ class FoodAnalysisService {
         Estimate the nutritional values per visible serving. Be accurate for Thai, Japanese, and international foods.
         """
 
-        do {
-            var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
-            request.httpMethod = "POST"
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.timeoutInterval = 30
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
 
-            let body: [String: Any] = [
-                "model": "gpt-4o-mini",
-                "messages": [
-                    [
-                        "role": "user",
-                        "content": [
-                            ["type": "text", "text": prompt],
-                            ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(base64)", "detail": "low"]]
-                        ]
+        let body: [String: Any] = [
+            "model": "gpt-5-nano",
+            "messages": [
+                [
+                    "role": "user",
+                    "content": [
+                        ["type": "text", "text": prompt],
+                        ["type": "image_url", "image_url": ["url": "data:image/jpeg;base64,\(base64)", "detail": "low"]]
                     ]
-                ],
-                "max_tokens": 300
-            ]
+                ]
+            ],
+            "max_tokens": 300
+        ]
 
+        do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            throw FoodAnalysisError.apiError("Failed to build request: \(error.localizedDescription)")
+        }
 
-            let (data, _) = try await URLSession.shared.data(for: request)
+        do {
+            let (data, urlResponse) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = urlResponse as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                if let errorResponse = try? JSONDecoder().decode(OpenAIErrorResponse.self, from: data) {
+                    throw FoodAnalysisError.apiError(errorResponse.error.message)
+                } else {
+                    throw FoodAnalysisError.apiError("Server returned status \(httpResponse.statusCode)")
+                }
+            }
+
             let response = try JSONDecoder().decode(OpenAIChatResponse.self, from: data)
 
             guard let content = response.choices.first?.message.content else {
@@ -114,6 +136,8 @@ class FoodAnalysisService {
                 imageData: imageData,
                 date: Date()
             )
+        } catch let error as FoodAnalysisError {
+            throw error
         } catch {
             throw FoodAnalysisError.apiError(error.localizedDescription)
         }
