@@ -54,7 +54,7 @@ struct MenuScannerChatView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             // Initial bot message
-                            if messages.isEmpty && selectedImage == nil {
+                            if selectedImage == nil {
                                 BotMessageBubble(
                                     message: lang.t("👋 Hi! Upload a menu photo or take a screenshot, and I'll help you find the perfect dish!",
                                                    thai: "👋 สวัสดี! อัปโหลดรูปเมนูหรือจับภาพหน้าจอ แล้วฉันจะช่วยคุณหาอาหารที่ดีที่สุด!",
@@ -63,12 +63,12 @@ struct MenuScannerChatView: View {
                             }
 
                             // Display uploaded image
-                            if let image = selectedImage, !isAnalyzing {
+                            if let image = selectedImage {
                                 UserImageBubble(image: image)
                             }
 
                             // Show recommendation type selector
-                            if selectedImage != nil && selectedRecommendationType == nil && !isAnalyzing {
+                            if selectedImage != nil && selectedRecommendationType == nil && !isAnalyzing && recommendations == nil {
                                 VStack(alignment: .leading, spacing: 12) {
                                     BotMessageBubble(
                                         message: lang.t("What are you looking for?",
@@ -76,7 +76,7 @@ struct MenuScannerChatView: View {
                                                        japanese: "何をお探しですか？")
                                     )
 
-                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                                         ForEach(RecommendationType.allCases, id: \.self) { type in
                                             RecommendationButton(
                                                 type: type,
@@ -86,7 +86,7 @@ struct MenuScannerChatView: View {
                                             }
                                         }
                                     }
-                                    .padding(.horizontal)
+                                    .padding(.horizontal, 4)
                                 }
                             }
 

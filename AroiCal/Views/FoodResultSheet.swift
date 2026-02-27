@@ -20,250 +20,267 @@ struct FoodResultSheet: View {
     }
 
     var body: some View {
-        ZStack {
-            // Full screen image background
-            if let data = entry.imageData, let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .ignoresSafeArea()
-
-                // Dark overlay for readability
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-            }
-
-            VStack {
-                // Top bar with back and menu buttons
-                HStack {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 40, height: 40)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-
-                    Spacer()
-
-                    Text(lang.t("Location", thai: "โลเคชัน", japanese: "ロケーション"))
-                        .font(.headline)
-                        .foregroundStyle(.white)
-
-                    Spacer()
-
-                    Button {
-                        // More options
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 40, height: 40)
-                            .background(.ultraThinMaterial, in: Circle())
-                    }
-                }
-                .padding()
-
-                Spacer()
-
-                // Bottom card
-                VStack(spacing: 0) {
-                    // Bookmark and time
-                    HStack {
-                        Image(systemName: "bookmark")
-                            .foregroundStyle(.secondary)
-
-                        Text(currentTime)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                // Background image - takes exactly 40% of screen height
+                if let data = entry.imageData, let uiImage = UIImage(data: data) {
+                    VStack(spacing: 0) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: geometry.size.height * 0.4)
+                            .clipped()
+                            .overlay {
+                                // Dark gradient overlay
+                                LinearGradient(
+                                    colors: [
+                                        Color.black.opacity(0.3),
+                                        Color.black.opacity(0.1),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            }
 
                         Spacer()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
+                }
 
-                    // Food name and serving selector
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(displayName)
-                                .font(.title2.weight(.bold))
-                                .foregroundStyle(.primary)
+                VStack(spacing: 0) {
+                    // Top navigation bar
+                    HStack {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                        }
 
-                            HStack(spacing: 4) {
+                        Spacer()
+
+                        Text(lang.t("Location", thai: "โลเคชัน", japanese: "ロケーション"))
+                            .font(.headline)
+                            .foregroundStyle(.white)
+
+                        Spacer()
+
+                        Button {
+                            // More options
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+
+                    Spacer()
+                        .frame(height: geometry.size.height * 0.3)
+
+                    // White card section
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 16) {
+                            // Bookmark and time
+                            HStack {
+                                Image(systemName: "bookmark")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Text(currentTime)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+
+                                Spacer()
+                            }
+
+                            // Food name and serving counter
+                            HStack(alignment: .center) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(displayName)
+                                        .font(.title2.weight(.bold))
+                                        .lineLimit(2)
+
+                                    HStack(spacing: 4) {
+                                        Circle()
+                                            .fill(.secondary)
+                                            .frame(width: 4, height: 4)
+
+                                        Text(entry.servingSize)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+
+                                Spacer()
+
+                                // Serving counter
+                                HStack(spacing: 12) {
+                                    Button {
+                                        if servings > 1 {
+                                            withAnimation(.spring(duration: 0.3)) {
+                                                servings -= 1
+                                            }
+                                        }
+                                    } label: {
+                                        Image(systemName: "minus")
+                                            .font(.body.weight(.bold))
+                                            .foregroundStyle(.primary)
+                                            .frame(width: 32, height: 32)
+                                    }
+
+                                    Text("\(servings)")
+                                        .font(.body.weight(.semibold))
+                                        .frame(width: 24)
+
+                                    Button {
+                                        withAnimation(.spring(duration: 0.3)) {
+                                            servings += 1
+                                        }
+                                    } label: {
+                                        Image(systemName: "plus")
+                                            .font(.body.weight(.bold))
+                                            .foregroundStyle(.primary)
+                                            .frame(width: 32, height: 32)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .clipShape(Capsule())
+                            }
+
+                            // Calories card
+                            HStack(spacing: 12) {
+                                Image(systemName: "flame.fill")
+                                    .font(.title)
+                                    .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(lang.t("Calories", thai: "แคลอรี", japanese: "カロリー"))
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(.secondary)
+
+                                    Text("\(entry.calories * servings)")
+                                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.primary)
+                                }
+
+                                Spacer()
+                            }
+                            .padding(16)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                            // Macros grid
+                            HStack(spacing: 12) {
+                                ModernMacroCard(
+                                    icon: "🍖",
+                                    name: lang.t("Protein", thai: "โปรตีน", japanese: "タンパク質"),
+                                    grams: Int(entry.protein * Double(servings)),
+                                    color: Color(red: 0.35, green: 0.67, blue: 1)
+                                )
+                                ModernMacroCard(
+                                    icon: "🌾",
+                                    name: lang.t("Carbs", thai: "คาร์บ", japanese: "炭水化物"),
+                                    grams: Int(entry.carbs * Double(servings)),
+                                    color: Color(red: 1, green: 0.42, blue: 0.21)
+                                )
+                                ModernMacroCard(
+                                    icon: "🥑",
+                                    name: lang.t("Fat", thai: "ไขมัน", japanese: "脂質"),
+                                    grams: Int(entry.fat * Double(servings)),
+                                    color: Color(red: 1, green: 0.72, blue: 0)
+                                )
+                            }
+
+                            // Paging dots
+                            HStack(spacing: 6) {
                                 Circle()
-                                    .fill(.secondary)
-                                    .frame(width: 4, height: 4)
+                                    .fill(.primary)
+                                    .frame(width: 7, height: 7)
+                                Circle()
+                                    .fill(.secondary.opacity(0.3))
+                                    .frame(width: 7, height: 7)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
 
-                                Text(entry.servingSize)
+                            // Ingredients section
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text(lang.t("Ingredients", thai: "วัตถุดิบ", japanese: "材料"))
+                                        .font(.headline)
+
+                                    Spacer()
+
+                                    Button {
+                                        // Add ingredient
+                                    } label: {
+                                        Text("+ \(lang.t("Add", thai: "เพิ่ม", japanese: "追加"))")
+                                            .font(.subheadline.weight(.medium))
+                                            .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+                                    }
+                                }
+
+                                Text("Lettuce • 20 cal • 1.5 serving")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
-                        }
 
-                        Spacer()
-
-                        // Serving counter
-                        HStack(spacing: 16) {
-                            Button {
-                                if servings > 1 {
-                                    servings -= 1
+                            // Action buttons
+                            HStack(spacing: 12) {
+                                Button {
+                                    // Add ingredient
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "plus")
+                                            .font(.body.weight(.semibold))
+                                        Text(lang.t("Add Data", thai: "แก้ไขข้อมูล", japanese: "データ追加"))
+                                            .font(.body.weight(.semibold))
+                                    }
+                                    .foregroundStyle(.primary)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 54)
+                                    .background(Color(.secondarySystemGroupedBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
                                 }
-                            } label: {
-                                Image(systemName: "minus")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.primary)
+
+                                Button {
+                                    onAdd()
+                                } label: {
+                                    Text(lang.t("Complete", thai: "เสร็จสิ้น", japanese: "完了"))
+                                        .font(.body.weight(.bold))
+                                        .foregroundStyle(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .frame(height: 54)
+                                        .background(
+                                            LinearGradient(
+                                                colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.55, blue: 0.1)],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                                }
                             }
-
-                            Text("\(servings)")
-                                .font(.body.weight(.semibold))
-                                .frame(width: 30)
-
-                            Button {
-                                servings += 1
-                            } label: {
-                                Image(systemName: "plus")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemGray6), in: Capsule())
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-
-                    // Calories section
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "flame.fill")
-                            .font(.title2)
-                            .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
-
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(lang.t("Calories", thai: "แคลอรี", japanese: "カロリー"))
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.secondary)
-
-                            Text("\(entry.calories * servings)")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(20)
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-
-                    // Macros
-                    HStack(spacing: 12) {
-                        ModernMacroCard(
-                            icon: "🍖",
-                            name: lang.t("Protein", thai: "โปรตีน", japanese: "タンパク質"),
-                            grams: Int(entry.protein * Double(servings)),
-                            color: Color(red: 0.35, green: 0.67, blue: 1)
-                        )
-                        ModernMacroCard(
-                            icon: "🌾",
-                            name: lang.t("Carbs", thai: "คาร์บ", japanese: "炭水化物"),
-                            grams: Int(entry.carbs * Double(servings)),
-                            color: Color(red: 1, green: 0.42, blue: 0.21)
-                        )
-                        ModernMacroCard(
-                            icon: "🥑",
-                            name: lang.t("Fat", thai: "ไขมัน", japanese: "脂質"),
-                            grams: Int(entry.fat * Double(servings)),
-                            color: Color(red: 1, green: 0.72, blue: 0)
-                        )
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-
-                    // Spacer for paging indicator
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(.primary)
-                            .frame(width: 6, height: 6)
-                        Circle()
-                            .fill(.secondary.opacity(0.3))
-                            .frame(width: 6, height: 6)
-                    }
-                    .padding(.top, 16)
-
-                    // Ingredients section
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(lang.t("Ingredients", thai: "วัตถุดิบ", japanese: "材料"))
-                                .font(.headline)
 
                             Spacer()
-
-                            Button {
-                                // Add ingredient
-                            } label: {
-                                Text("+ \(lang.t("Add", thai: "เพิ่ม", japanese: "追加"))")
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
-                            }
+                                .frame(height: 20)
                         }
-
-                        // Sample ingredient
-                        Text("Lettuce • 20 cal • 1.5 serving")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-
-                    // Action buttons
-                    HStack(spacing: 12) {
-                        Button {
-                            // Add ingredient
-                        } label: {
-                            HStack {
-                                Image(systemName: "plus")
-                                Text(lang.t("Add Ingredient", thai: "แก้ไขข้อมูล", japanese: "材料を追加"))
-                            }
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                        }
-
-                        Button {
-                            onAdd()
-                        } label: {
-                            Text(lang.t("Complete", thai: "เสร็จสิ้น", japanese: "完了"))
-                                .font(.body.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 52)
-                                .background(
-                                    LinearGradient(
-                                        colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.55, blue: 0.1)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 16)
+                    .background(Color(.systemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
-                .background(Color(.systemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             }
         }
-        .presentationDetents([.large])
-        .presentationDragIndicator(.hidden)
+        .ignoresSafeArea()
     }
 
     private var currentTime: String {
@@ -273,7 +290,7 @@ struct FoodResultSheet: View {
     }
 }
 
-// Modern macro card matching the screenshot design
+// Modern macro card
 struct ModernMacroCard: View {
     let icon: String
     let name: String
@@ -284,7 +301,7 @@ struct ModernMacroCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(icon)
-                    .font(.title3)
+                    .font(.title2)
 
                 Spacer()
             }
@@ -298,9 +315,9 @@ struct ModernMacroCard: View {
                 .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(14)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 
