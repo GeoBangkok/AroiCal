@@ -24,9 +24,7 @@ class NotificationsManager {
     func requestAndSchedule(language: AppLanguage) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] granted, _ in
             Task { @MainActor [weak self] in
-                withAnimation(.spring) {
-                    self?.isPermissionGranted = granted
-                }
+                self?.isPermissionGranted = granted
                 if granted {
                     self?.scheduleReminders(language: language)
                 }
