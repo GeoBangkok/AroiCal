@@ -10,7 +10,9 @@ struct HeightStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("How Tall Are You?", thai: "คุณสูงเท่าไหร่?", japanese: "身長は？"))
+                Text(firstName.isEmpty
+                     ? lang.t("How Tall Are You?", thai: "คุณสูงเท่าไหร่?", japanese: "身長は？")
+                     : lang.t("How Tall Are You, \(firstName)?", thai: "\(firstName) สูงเท่าไหร่?", japanese: "\(firstName)さんの身長は？"))
                     .font(.title.bold())
                 Text(lang.t("This helps us calculate your needs", thai: "ช่วยให้เราคำนวณความต้องการของคุณ", japanese: "あなたのニーズを計算するのに役立ちます"))
                     .font(.subheadline)
@@ -52,5 +54,10 @@ struct HeightStep: View {
         }
         .padding(.horizontal, 24)
         .sensoryFeedback(.selection, trigger: Int(profile.heightCm))
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

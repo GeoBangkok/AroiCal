@@ -10,7 +10,9 @@ struct GenderStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("What's Your Gender?", thai: "คุณเป็นเพศอะไร?", japanese: "性別を教えてください"))
+                Text(firstName.isEmpty
+                     ? lang.t("What's Your Gender?", thai: "คุณเป็นเพศอะไร?", japanese: "性別を教えてください")
+                     : lang.t("What's Your Gender, \(firstName)?", thai: "\(firstName) เป็นเพศอะไร?", japanese: "\(firstName)さんの性別は？"))
                     .font(.title.bold())
 
                 Text(lang.t("This affects your calorie calculation", thai: "มีผลต่อการคำนวณแคลอรี่", japanese: "カロリー計算に影響します"))
@@ -84,6 +86,11 @@ struct GenderStep: View {
         case .female: return "figure.stand.dress"
         case .other: return "figure.wave"
         }
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 
     private func genderLabel(_ gender: Gender) -> String {

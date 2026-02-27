@@ -10,7 +10,12 @@ struct OnboardingContainerView: View {
     @State private var loadingDone: Bool = false
     let onComplete: () -> Void
 
-    private let totalSteps = 15
+    private let totalSteps = 16
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
+    }
 
     var body: some View {
         ZStack {
@@ -22,8 +27,8 @@ struct OnboardingContainerView: View {
                         if currentStep > 0 {
                             Button {
                                 withAnimation(.snappy) {
-                                    if loadingDone && currentStep == 14 {
-                                        currentStep = 13
+                                    if loadingDone && currentStep == 15 {
+                                        currentStep = 14
                                         loadingDone = false
                                     } else {
                                         currentStep -= 1
@@ -51,56 +56,59 @@ struct OnboardingContainerView: View {
                         withAnimation(.snappy) {
                             showLoading = false
                             loadingDone = true
-                            currentStep = 14
+                            currentStep = 15
                         }
                     }
                     .environment(lang)
                 } else {
                     TabView(selection: $currentStep) {
-                        AgeStep(profile: $profile)
+                        NameStep(profile: $profile)
                             .tag(0)
 
-                        GenderStep(profile: $profile)
+                        AgeStep(profile: $profile)
                             .tag(1)
 
-                        HeightStep(profile: $profile)
+                        GenderStep(profile: $profile)
                             .tag(2)
 
-                        CurrentWeightStep(profile: $profile)
+                        HeightStep(profile: $profile)
                             .tag(3)
 
-                        DesiredWeightStep(profile: $profile)
+                        CurrentWeightStep(profile: $profile)
                             .tag(4)
 
-                        WeeklyGoalStep(profile: $profile)
+                        DesiredWeightStep(profile: $profile)
                             .tag(5)
 
-                        ActivityGoalStep(profile: $profile)
+                        WeeklyGoalStep(profile: $profile)
                             .tag(6)
 
-                        DifficultiesStep(profile: $profile)
+                        ActivityGoalStep(profile: $profile)
                             .tag(7)
 
-                        WeightLossGraphicStep()
+                        DifficultiesStep(profile: $profile)
                             .tag(8)
 
-                        DietGoalsStep(profile: $profile)
+                        WeightLossGraphicStep(name: firstName)
                             .tag(9)
 
-                        GoalsGraphicStep()
+                        DietGoalsStep(profile: $profile)
                             .tag(10)
 
-                        CreatorReferralStep(profile: $profile)
+                        GoalsGraphicStep(name: firstName)
                             .tag(11)
 
-                        NotificationsStep()
+                        CreatorReferralStep(profile: $profile)
                             .tag(12)
 
-                        ReviewsStep()
+                        NotificationsStep(name: firstName)
                             .tag(13)
 
-                        PersonalizedPlanStep(profile: profile)
+                        ReviewsStep()
                             .tag(14)
+
+                        PersonalizedPlanStep(profile: profile)
+                            .tag(15)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.snappy, value: currentStep)
@@ -109,11 +117,11 @@ struct OnboardingContainerView: View {
                 if !showPaywall && !showLoading {
                     Button {
                         withAnimation(.snappy) {
-                            if currentStep == 13 && !loadingDone {
+                            if currentStep == 14 && !loadingDone {
                                 profileManager.profile = profile
                                 profileManager.applyCalculatedTargets()
                                 showLoading = true
-                            } else if currentStep < 14 {
+                            } else if currentStep < 15 {
                                 currentStep += 1
                             } else {
                                 showPaywall = true
@@ -148,7 +156,7 @@ struct OnboardingContainerView: View {
     }
 
     private var buttonText: String {
-        if currentStep == 14 {
+        if currentStep == 15 {
             return lang.t("Get Started", thai: "เริ่มต้นใช้งาน", japanese: "始める")
         }
         return lang.t("Continue", thai: "ต่อไป", japanese: "続ける")

@@ -10,7 +10,9 @@ struct CurrentWeightStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("Current Weight", thai: "น้ำหนักปัจจุบัน", japanese: "現在の体重"))
+                Text(firstName.isEmpty
+                     ? lang.t("Current Weight", thai: "น้ำหนักปัจจุบัน", japanese: "現在の体重")
+                     : lang.t("\(firstName)'s Current Weight", thai: "น้ำหนักปัจจุบันของ\(firstName)", japanese: "\(firstName)さんの現在の体重"))
                     .font(.title.bold())
                 Text(lang.t("Where are you starting from?", thai: "คุณเริ่มต้นจากจุดไหน?", japanese: "現在の体重を教えてください"))
                     .font(.subheadline)
@@ -52,5 +54,10 @@ struct CurrentWeightStep: View {
         }
         .padding(.horizontal, 24)
         .sensoryFeedback(.selection, trigger: Int(profile.weightKg * 2))
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }

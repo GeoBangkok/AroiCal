@@ -11,7 +11,9 @@ struct AgeStep: View {
 
             VStack(spacing: 12) {
                 AroiCalHeader()
-                Text(lang.t("How Old Are You?", thai: "คุณอายุเท่าไหร่?", japanese: "おいくつですか？"))
+                Text(firstName.isEmpty
+                     ? lang.t("How Old Are You?", thai: "คุณอายุเท่าไหร่?", japanese: "おいくつですか？")
+                     : lang.t("How Old Are You, \(firstName)?", thai: "\(firstName) อายุเท่าไหร่?", japanese: "\(firstName)さん、おいくつですか？"))
                     .font(.title.bold())
 
                 Text(lang.t("This helps us personalize your plan", thai: "ช่วยให้เราปรับแผนให้เหมาะกับคุณ", japanese: "あなたに合ったプランを作成します"))
@@ -66,5 +68,10 @@ struct AgeStep: View {
             try? await Task.sleep(for: .milliseconds(800))
             ATTrackingManager.requestTrackingAuthorization { _ in }
         }
+    }
+
+    private var firstName: String {
+        let t = profile.name.trimmingCharacters(in: .whitespaces)
+        return t.components(separatedBy: " ").first ?? t
     }
 }
