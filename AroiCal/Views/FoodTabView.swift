@@ -51,6 +51,8 @@ struct FoodTabView: View {
                         emptyStateView
                     }
 
+                    researchFootnote
+
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal)
@@ -137,6 +139,27 @@ struct FoodTabView: View {
                 }
             }
         }
+    }
+
+    private var researchFootnote: some View {
+        VStack(spacing: 4) {
+            Text(lang.t(
+                "AI calorie & macro estimates are supported by published research.",
+                thai: "การประมาณแคลอรีและสารอาหารด้วย AI อ้างอิงจากงานวิจัยที่ตีพิมพ์แล้ว",
+                japanese: "AIによるカロリーと栄養素の推定は、発表された研究に基づいています。"
+            ))
+            .font(.caption2)
+            .foregroundStyle(Color(.tertiaryLabel))
+            .multilineTextAlignment(.center)
+
+            Link(destination: URL(string: "https://pubmed.ncbi.nlm.nih.gov/38060823/")!) {
+                Text(lang.t("View Research →", thai: "ดูงานวิจัย →", japanese: "研究を見る →"))
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 4)
     }
 
     private var dateSelector: some View {

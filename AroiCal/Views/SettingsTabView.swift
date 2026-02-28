@@ -87,6 +87,49 @@ struct SettingsTabView: View {
                     }
                 }
 
+                Section(lang.t("Research & Citations", thai: "งานวิจัยและอ้างอิง", japanese: "研究と引用")) {
+                    Text(lang.t(
+                        "Aroi Cal's AI estimates are backed by peer-reviewed research demonstrating that computer vision can accurately assess calories and macronutrients.",
+                        thai: "การประมาณค่า AI ของ Aroi Cal ได้รับการสนับสนุนจากงานวิจัยที่ผ่านการตรวจสอบโดยผู้เชี่ยวชาญ ซึ่งแสดงให้เห็นว่า computer vision สามารถประเมินแคลอรีและสารอาหารได้อย่างแม่นยำ",
+                        japanese: "Aroi CalのAI推定値は、コンピュータビジョンがカロリーと栄養素を正確に評価できることを示す、査読済みの研究によって裏付けられています。"
+                    ))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                    Link(destination: URL(string: "https://pubmed.ncbi.nlm.nih.gov/38060823/")!) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("AI-based digital image dietary assessment methods compared to humans and ground truth")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Text(lang.t("Systematic Review · PubMed · 2023", thai: "การทบทวนอย่างเป็นระบบ · PubMed · 2023", japanese: "系統的レビュー · PubMed · 2023"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Link(destination: URL(string: "https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/Meyers_Im2Calories_Towards_an_ICCV_2015_paper.pdf")!) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Im2Calories: Towards an Automated Mobile Vision Food Diary")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Text("Myers et al. · ICCV 2015 · Google Research")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Link(destination: URL(string: "https://pubmed.ncbi.nlm.nih.gov/36976459/")!) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Deep neural network for food image classification and nutrient identification")
+                                .font(.caption.weight(.medium))
+                                .foregroundStyle(.primary)
+                            Text(lang.t("Systematic Review · PubMed · 2023", thai: "การทบทวนอย่างเป็นระบบ · PubMed · 2023", japanese: "系統的レビュー · PubMed · 2023"))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section {
                     Button {
                         openSubscriptionManagement()
