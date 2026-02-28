@@ -758,15 +758,15 @@ struct AnalyzingOverlay: View {
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 pulseScale = 1.04
             }
-            // Staged progress: 0% → 25% → 50% → 75% → 100%
+            // Staged progress: 0% → 25% → 50% → 75% → 100% over ~2.5s
             Task {
-                withAnimation(.easeOut(duration: 0.7)) { progressValue = 0.25 }
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                withAnimation(.easeInOut(duration: 0.7)) { progressValue = 0.50 }
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                withAnimation(.easeInOut(duration: 0.7)) { progressValue = 0.75 }
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                withAnimation(.easeIn(duration: 0.7)) { progressValue = 1.0 }
+                withAnimation(.easeOut(duration: 0.5)) { progressValue = 0.25 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeInOut(duration: 0.5)) { progressValue = 0.50 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeInOut(duration: 0.5)) { progressValue = 0.75 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeIn(duration: 0.5)) { progressValue = 1.0 }
             }
         }
     }
