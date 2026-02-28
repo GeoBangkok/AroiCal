@@ -6,6 +6,7 @@ struct AroiCalorieScannerApp: App {
     @State private var languageManager = LanguageManager()
     @State private var profileManager = UserProfileManager()
     @State private var logManager = DailyLogManager()
+    @State private var weightLogManager = WeightLogManager()
     @State private var notificationsManager = NotificationsManager()
 
     init() {
@@ -19,6 +20,7 @@ struct AroiCalorieScannerApp: App {
                 .environment(languageManager)
                 .environment(profileManager)
                 .environment(logManager)
+                .environment(weightLogManager)
                 .environment(notificationsManager)
         }
     }

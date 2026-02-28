@@ -4,7 +4,9 @@ struct ProgressTabView: View {
     @Environment(LanguageManager.self) private var lang
     @Environment(UserProfileManager.self) private var profileManager
     @Environment(DailyLogManager.self) private var logManager
+    @Environment(WeightLogManager.self) private var weightLogManager
     @State private var selectedRange: Int = 7
+    @State private var showLogWeight: Bool = false
 
     private var recentLogs: [DailyLog] { logManager.logsForLastDays(selectedRange) }
 
@@ -19,6 +21,8 @@ struct ProgressTabView: View {
                     macroBreakdownCard
 
                     streakCard
+
+                    weightCard
 
                     if !recentLogs.isEmpty {
                         dailyBreakdownSection
@@ -40,6 +44,16 @@ struct ProgressTabView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showLogWeight) {
+                LogWeightSheet(
+                    initialWeight: weightLogManager.entryForToday()?.weightKg ?? profileManager.profile.weightKg
+                ) { kg in
+                    weightLogManager.logWeight(kg)
+                }
+                .environment(lang)
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -286,6 +300,196 @@ struct ProgressTabView: View {
         formatter.dateFormat = "EEE"
         formatter.locale = Locale(identifier: lang.localeIdentifier)
         return String(formatter.string(from: date).prefix(2))
+    }
+
+    // MARK: - Weight card
+
+    private var weightCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text(lang.t("Weight", thai: "น้ำหนัก", japanese: "体重"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Button {
+                    showLogWeight = true
+                } label: {
+                    Text(lang.t("+ Log", thai: "+ บันทึก", japanese: "+ 記録"))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color(red: 1, green: 0.42, blue: 0.21), in: .capsule)
+                }
+            }
+
+            let weightEntries = weightLogManager.entriesForLastDays(selectedRange)
+
+            if weightEntries.isEmpty {
+                Text(lang.t("No weight logged yet", thai: "ยังไม่มีการบันทึกน้ำหนัก", japanese: "体重が記録されていません"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(String(format: "%.1f", weightEntries.last!.weightKg))
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+
+                    Text(lang.t("kg", thai: "กก.", japanese: "kg"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    if weightEntries.count >= 2 {
+                        let delta = weightEntries.last!.weightKg - weightEntries.first!.weightKg
+                        HStack(spacing: 3) {
+                            Image(systemName: delta <= 0 ? "arrow.down.right" : "arrow.up.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(delta <= 0 ? .green : .red)
+                            Text(String(format: "%.1f kg", abs(delta)))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                WeightLineChart(
+                    entries: weightEntries,
+                    goalWeight: profileManager.profile.desiredWeightKg
+                )
+                .frame(height: 80)
+            }
+        }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+    }
+}
+
+// MARK: - Weight line chart
+
+private struct WeightLineChart: View {
+    let entries: [WeightEntry]
+    let goalWeight: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            let weights = entries.map { $0.weightKg }
+            let minW = (weights.min() ?? 0) - 1.5
+            let maxW = (weights.max() ?? 1) + 1.5
+            let range = maxW - minW
+            let w = geo.size.width
+            let h = geo.size.height
+
+            ZStack {
+                // Goal dashed line
+                if goalWeight >= minW && goalWeight <= maxW {
+                    let goalY = h - CGFloat((goalWeight - minW) / range) * h
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: goalY))
+                        path.addLine(to: CGPoint(x: w, y: goalY))
+                    }
+                    .stroke(Color.green.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [5, 3]))
+                }
+
+                // Weight line
+                if entries.count > 1 {
+                    Path { path in
+                        for (i, entry) in entries.enumerated() {
+                            let x = CGFloat(i) / CGFloat(entries.count - 1) * w
+                            let y = h - CGFloat((entry.weightKg - minW) / range) * h
+                            i == 0 ? path.move(to: CGPoint(x: x, y: y)) : path.addLine(to: CGPoint(x: x, y: y))
+                        }
+                    }
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.72, blue: 0)],
+                            startPoint: .leading, endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                    )
+                }
+
+                // Dots
+                ForEach(Array(entries.enumerated()), id: \.offset) { i, entry in
+                    let x = entries.count > 1 ? CGFloat(i) / CGFloat(entries.count - 1) * w : w / 2
+                    let y = h - CGFloat((entry.weightKg - minW) / range) * h
+                    Circle()
+                        .fill(Color(red: 1, green: 0.42, blue: 0.21))
+                        .frame(width: 6, height: 6)
+                        .position(x: x, y: y)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Log weight sheet
+
+struct LogWeightSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(LanguageManager.self) private var lang
+    let initialWeight: Double
+    let onSave: (Double) -> Void
+
+    @State private var weight: Double
+
+    init(initialWeight: Double, onSave: @escaping (Double) -> Void) {
+        self.initialWeight = initialWeight
+        self._weight = State(initialValue: initialWeight)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 28) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(String(format: "%.1f", weight))
+                        .font(.system(size: 60, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+                        .contentTransition(.numericText())
+                        .animation(.snappy, value: weight)
+
+                    Text(lang.t("kg", thai: "กก.", japanese: "kg"))
+                        .font(.system(size: 28, weight: .medium, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                Slider(value: $weight, in: 30...250, step: 0.1)
+                    .tint(Color(red: 1, green: 0.42, blue: 0.21))
+                    .padding(.horizontal)
+
+                Button {
+                    onSave(weight)
+                    dismiss()
+                } label: {
+                    Text(lang.t("Save", thai: "บันทึก", japanese: "保存"))
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(red: 1, green: 0.42, blue: 0.21), Color(red: 1, green: 0.55, blue: 0.1)],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(.horizontal)
+            }
+            .padding(.top, 24)
+            .navigationTitle(lang.t("Log Weight", thai: "บันทึกน้ำหนัก", japanese: "体重を記録"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(lang.t("Cancel", thai: "ยกเลิก", japanese: "キャンセル")) { dismiss() }
+                }
+            }
+        }
     }
 }
 
