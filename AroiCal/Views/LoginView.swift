@@ -1,185 +1,139 @@
 import SwiftUI
-import AVFoundation
-
-// MARK: - Looping background video player (no controls)
-struct LoopingVideoPlayer: UIViewRepresentable {
-    let player: AVPlayer
-
-    func makeUIView(context: Context) -> PlayerView {
-        let view = PlayerView(player: player)
-        return view
-    }
-
-    func updateUIView(_ uiView: PlayerView, context: Context) {}
-
-    class PlayerView: UIView {
-        private let playerLayer = AVPlayerLayer()
-
-        init(player: AVPlayer) {
-            super.init(frame: .zero)
-            playerLayer.player = player
-            playerLayer.videoGravity = .resizeAspectFill
-            layer.addSublayer(playerLayer)
-        }
-
-        required init?(coder: NSCoder) { fatalError() }
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-            playerLayer.frame = bounds
-        }
-    }
-}
 
 // MARK: - LoginView
 struct LoginView: View {
     @Environment(LanguageManager.self) private var lang
     var onGetStarted: () -> Void
 
-    @State private var player: AVPlayer?
-    @State private var titleOpacity: Double = 0
-    @State private var subtitleOpacity: Double = 0
-    @State private var buttonOpacity: Double = 0
-    @State private var buttonScale: CGFloat = 0.85
+    @State private var cardOffset: CGFloat = 340
+    @State private var imageScale: CGFloat = 1.08
 
     var body: some View {
-        ZStack {
-            // Background: looping video or gradient fallback
-            if let player {
-                LoopingVideoPlayer(player: player)
+        GeometryReader { geo in
+            ZStack(alignment: .bottom) {
+
+                // ── Hero image ──────────────────────────────────────────────
+                Image("HeroImage")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
+                    .scaleEffect(imageScale)
                     .ignoresSafeArea()
-            } else {
-                // Fallback gradient until video is available
+
+                // Subtle bottom scrim so the card edge reads cleanly
                 LinearGradient(
-                    colors: [
-                        Color(red: 0.10, green: 0.06, blue: 0.02),
-                        Color(red: 0.28, green: 0.12, blue: 0.04),
-                        Color(red: 0.50, green: 0.20, blue: 0.06)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                    colors: [.clear, .black.opacity(0.18)],
+                    startPoint: .center,
+                    endPoint: .bottom
                 )
                 .ignoresSafeArea()
-            }
 
-            // Dark gradient overlay so text pops
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.35),
-                    Color.black.opacity(0.15),
-                    Color.black.opacity(0.65)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+                // ── Bottom card ─────────────────────────────────────────────
+                VStack(alignment: .leading, spacing: 0) {
 
-            VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 80)
+                    // Drag indicator
+                    Capsule()
+                        .fill(Color(.systemGray4))
+                        .frame(width: 36, height: 4)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 14)
+                        .padding(.bottom, 26)
 
-                // App name
-                VStack(spacing: 10) {
-                    Text("AROI CAL")
-                        .font(.system(size: 52, weight: .heavy, design: .rounded))
-                        .tracking(6)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1, green: 0.72, blue: 0.25),
-                                    Color(red: 1, green: 0.42, blue: 0.21)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
-                        .opacity(titleOpacity)
+                    // App name
+                    Text("AroiCal")
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .foregroundStyle(.black)
 
-                    // Thai subtitle (primary)
-                    Text("สแกนแคลอรี่ของคุณ")
-                        .font(.system(size: 20, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.90))
-                        .shadow(color: .black.opacity(0.5), radius: 6, x: 0, y: 3)
-                        .opacity(subtitleOpacity)
+                    // Thai tagline
+                    Text(lang.t(
+                        "Your AI calorie tracker",
+                        thai: "ติดตามแคลอรี่ด้วย AI",
+                        japanese: "AIカロリートラッカー"
+                    ))
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .padding(.top, 5)
 
-                    // English subtitle (secondary)
-                    Text("scan your calories")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.55))
-                        .opacity(subtitleOpacity)
-                }
-
-                Spacer()
-
-                // Get started button
-                Button {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        onGetStarted()
+                    // English secondary line (shown in all languages)
+                    if lang.current != .english {
+                        Text("scan your calories")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundStyle(Color(.tertiaryLabel))
+                            .padding(.top, 2)
                     }
-                } label: {
-                    Text(lang.t("Get Started", thai: "เริ่มต้นเลย", japanese: "始めましょう"))
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+
+                    // Feature pills
+                    HStack(spacing: 8) {
+                        featurePill(
+                            icon: "camera.fill",
+                            text: lang.t("Scan Food", thai: "สแกนอาหาร", japanese: "食事スキャン")
+                        )
+                        featurePill(
+                            icon: "chart.bar.fill",
+                            text: lang.t("Track Progress", thai: "ติดตามผล", japanese: "進捗記録")
+                        )
+                        featurePill(
+                            icon: "flame.fill",
+                            text: lang.t("Streak", thai: "ต่อเนื่อง", japanese: "連続記録")
+                        )
+                    }
+                    .padding(.top, 20)
+
+                    Spacer(minLength: 20)
+
+                    // CTA button
+                    Button(action: onGetStarted) {
+                        Text(lang.t(
+                            "Get Started",
+                            thai: "เริ่มต้นเลย",
+                            japanese: "始めましょう"
+                        ))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 58)
-                        .background(
-                            LinearGradient(
-                                colors: [
-                                    Color(red: 1, green: 0.42, blue: 0.21),
-                                    Color(red: 1, green: 0.60, blue: 0.08)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            in: .rect(cornerRadius: 18)
-                        )
-                        .shadow(color: Color(red: 1, green: 0.42, blue: 0.21).opacity(0.55), radius: 16, x: 0, y: 8)
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 56)
-                .scaleEffect(buttonScale)
-                .opacity(buttonOpacity)
-            }
-        }
-        .onAppear {
-            setupPlayer()
+                        .frame(height: 56)
+                        .background(.black, in: .rect(cornerRadius: 16))
+                    }
 
-            withAnimation(.easeOut(duration: 0.9).delay(0.3)) {
-                titleOpacity = 1
-            }
-            withAnimation(.easeOut(duration: 0.9).delay(0.7)) {
-                subtitleOpacity = 1
-            }
-            withAnimation(.spring(duration: 0.6, bounce: 0.25).delay(1.1)) {
-                buttonOpacity = 1
-                buttonScale = 1.0
+                    // Bottom safe-area pad
+                    Spacer()
+                        .frame(height: max(geo.safeAreaInsets.bottom, 20) + 8)
+                }
+                .padding(.horizontal, 28)
+                .frame(height: geo.size.height * 0.46)
+                .background(
+                    Color.white
+                        .clipShape(.rect(topLeadingRadius: 38, bottomLeadingRadius: 0,
+                                         bottomTrailingRadius: 0, topTrailingRadius: 38))
+                        .shadow(color: .black.opacity(0.14), radius: 24, x: 0, y: -6)
+                )
+                .offset(y: cardOffset)
             }
         }
-        .onDisappear {
-            player?.pause()
-            NotificationCenter.default.removeObserver(self)
+        .ignoresSafeArea()
+        .onAppear {
+            withAnimation(.spring(duration: 0.75, bounce: 0.08).delay(0.15)) {
+                cardOffset = 0
+            }
+            withAnimation(.easeOut(duration: 1.2).delay(0.1)) {
+                imageScale = 1.0
+            }
         }
     }
 
-    private func setupPlayer() {
-        guard let url = Bundle.main.url(forResource: "Video", withExtension: "mp4") else {
-            print("Video asset not found")
-            return
+    @ViewBuilder
+    private func featurePill(icon: String, text: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
+            Text(text)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color(.secondaryLabel))
         }
-        let item = AVPlayerItem(url: url)
-        let avPlayer = AVPlayer(playerItem: item)
-        avPlayer.isMuted = true
-        avPlayer.play()
-        self.player = avPlayer
-
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: item,
-            queue: .main
-        ) { _ in
-            avPlayer.seek(to: .zero)
-            avPlayer.play()
-        }
+        .padding(.horizontal, 11)
+        .padding(.vertical, 7)
+        .background(Color(.systemGray6), in: .capsule)
     }
 }

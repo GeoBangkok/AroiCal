@@ -41,8 +41,6 @@ struct FoodTabView: View {
 
                     caloriesSummaryCard
 
-                    researchFootnote
-
                     if isToday {
                         scanSection
                     }
@@ -139,27 +137,6 @@ struct FoodTabView: View {
                 }
             }
         }
-    }
-
-    private var researchFootnote: some View {
-        VStack(spacing: 4) {
-            Text(lang.t(
-                "AI calorie & macro estimates are supported by published research.",
-                thai: "การประมาณแคลอรีและสารอาหารด้วย AI อ้างอิงจากงานวิจัยที่ตีพิมพ์แล้ว",
-                japanese: "AIによるカロリーと栄養素の推定は、発表された研究に基づいています。"
-            ))
-            .font(.caption2)
-            .foregroundStyle(Color(.tertiaryLabel))
-            .multilineTextAlignment(.center)
-
-            Link(destination: URL(string: "https://pubmed.ncbi.nlm.nih.gov/38060823/")!) {
-                Text(lang.t("View Research →", thai: "ดูงานวิจัย →", japanese: "研究を見る →"))
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 4)
     }
 
     private var dateSelector: some View {
@@ -777,13 +754,19 @@ struct AnalyzingOverlay: View {
             withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
                 shimmerX = 180
             }
-            // Progress ring fills to ~88%
-            withAnimation(.easeInOut(duration: 3.0)) {
-                progressValue = 0.88
-            }
             // Gentle image pulse
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 pulseScale = 1.04
+            }
+            // Staged progress: 0% → 25% → 50% → 75% → 100% over ~2.5s
+            Task {
+                withAnimation(.easeOut(duration: 0.5)) { progressValue = 0.25 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeInOut(duration: 0.5)) { progressValue = 0.50 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeInOut(duration: 0.5)) { progressValue = 0.75 }
+                try? await Task.sleep(nanoseconds: 650_000_000)
+                withAnimation(.easeIn(duration: 0.5)) { progressValue = 1.0 }
             }
         }
     }

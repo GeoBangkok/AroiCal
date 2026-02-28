@@ -210,28 +210,6 @@ struct FoodResultSheet: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
 
-                            // Ingredients section
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    Text(lang.t("Ingredients", thai: "วัตถุดิบ", japanese: "材料"))
-                                        .font(.headline)
-
-                                    Spacer()
-
-                                    Button {
-                                        // Add ingredient
-                                    } label: {
-                                        Text("+ \(lang.t("Add", thai: "เพิ่ม", japanese: "追加"))")
-                                            .font(.subheadline.weight(.medium))
-                                            .foregroundStyle(Color(red: 1, green: 0.42, blue: 0.21))
-                                    }
-                                }
-
-                                Text("Lettuce • 20 cal • 1.5 serving")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
                             // Action buttons
                             HStack(spacing: 12) {
                                 Button {
