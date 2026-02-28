@@ -754,13 +754,19 @@ struct AnalyzingOverlay: View {
             withAnimation(.linear(duration: 1.1).repeatForever(autoreverses: false)) {
                 shimmerX = 180
             }
-            // Progress ring fills to ~88%
-            withAnimation(.easeInOut(duration: 3.0)) {
-                progressValue = 0.88
-            }
             // Gentle image pulse
             withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
                 pulseScale = 1.04
+            }
+            // Staged progress: 0% → 25% → 50% → 75% → 100%
+            Task {
+                withAnimation(.easeOut(duration: 0.7)) { progressValue = 0.25 }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                withAnimation(.easeInOut(duration: 0.7)) { progressValue = 0.50 }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                withAnimation(.easeInOut(duration: 0.7)) { progressValue = 0.75 }
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                withAnimation(.easeIn(duration: 0.7)) { progressValue = 1.0 }
             }
         }
     }
