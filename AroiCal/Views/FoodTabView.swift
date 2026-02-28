@@ -41,6 +41,8 @@ struct FoodTabView: View {
 
                     caloriesSummaryCard
 
+                    researchFootnote
+
                     if isToday {
                         scanSection
                     }
@@ -50,8 +52,6 @@ struct FoodTabView: View {
                     } else {
                         emptyStateView
                     }
-
-                    researchFootnote
 
                     Spacer(minLength: 40)
                 }
