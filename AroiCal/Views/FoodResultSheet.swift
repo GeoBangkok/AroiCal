@@ -264,6 +264,7 @@ struct FoodResultSheet: View {
     private var currentTime: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: lang.localeIdentifier)
         return formatter.string(from: Date())
     }
 }

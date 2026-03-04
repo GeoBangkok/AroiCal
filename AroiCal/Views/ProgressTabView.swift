@@ -219,7 +219,7 @@ struct ProgressTabView: View {
 
             ForEach(recentLogs.reversed()) { log in
                 HStack {
-                    Text(log.date, format: .dateTime.month(.abbreviated).day())
+                    Text(formattedBreakdownDate(log.date))
                         .font(.subheadline.weight(.medium))
                         .frame(width: 60, alignment: .leading)
 
@@ -300,6 +300,17 @@ struct ProgressTabView: View {
         formatter.dateFormat = "EEE"
         formatter.locale = Locale(identifier: lang.localeIdentifier)
         return String(formatter.string(from: date).prefix(2))
+    }
+
+    private func formattedBreakdownDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: lang.localeIdentifier)
+        switch lang.current {
+        case .japanese: formatter.dateFormat = "M月d日"
+        case .thai:     formatter.dateFormat = "d MMM"
+        case .english:  formatter.dateFormat = "MMM d"
+        }
+        return formatter.string(from: date)
     }
 
     // MARK: - Weight card

@@ -177,7 +177,8 @@ struct MenuScannerChatView: View {
                 let service = MenuAnalysisService()
                 let result = try await service.analyzeMenuWithRecommendation(
                     image: image,
-                    recommendationType: type.rawValue
+                    recommendationType: type.rawValue,
+                    language: lang.current
                 )
 
                 await MainActor.run {

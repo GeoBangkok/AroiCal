@@ -33,23 +33,15 @@ class MenuAnalysisService {
     private let apiKey = Config.openAIAPIKey
     private let apiEndpoint = "https://api.openai.com/v1/chat/completions"
 
-    func analyzeMenu(image: UIImage) async throws -> MenuRecommendations {
-        // First, extract text from the image using Vision framework
+    func analyzeMenu(image: UIImage, language: AppLanguage = .english) async throws -> MenuRecommendations {
         let menuText = try await extractTextFromImage(image)
-
-        // Then send to OpenAI for analysis
-        let recommendations = try await getMenuRecommendations(menuText: menuText)
-
+        let recommendations = try await getMenuRecommendations(menuText: menuText, language: language)
         return recommendations
     }
 
-    func analyzeMenuWithRecommendation(image: UIImage, recommendationType: String) async throws -> String {
-        // First, extract text from the image using Vision framework
+    func analyzeMenuWithRecommendation(image: UIImage, recommendationType: String, language: AppLanguage = .english) async throws -> String {
         let menuText = try await extractTextFromImage(image)
-
-        // Then send to OpenAI for specific recommendation
-        let recommendation = try await getSpecificRecommendation(menuText: menuText, type: recommendationType)
-
+        let recommendation = try await getSpecificRecommendation(menuText: menuText, type: recommendationType, language: language)
         return recommendation
     }
 
@@ -79,6 +71,8 @@ class MenuAnalysisService {
 
             request.recognitionLevel = .accurate
             request.usesLanguageCorrection = true
+            // Support Japanese, Thai, and English menus
+            request.recognitionLanguages = ["ja-JP", "th-TH", "en-US"]
 
             let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
 
@@ -90,12 +84,31 @@ class MenuAnalysisService {
         }
     }
 
-    private func getMenuRecommendations(menuText: String) async throws -> MenuRecommendations {
+    private func getMenuRecommendations(menuText: String, language: AppLanguage = .english) async throws -> MenuRecommendations {
+        let languageInstruction: String
+        switch language {
+        case .japanese:
+            languageInstruction = """
+            This is likely a Japanese menu. Apply these rules:
+            - Recognize kanji/kana dish names accurately (e.g., 定食, ラーメン, 天ぷら, 刺身).
+            - Japanese menus often use price formats like ¥980 or 980円 (税込/税抜).
+            - Set-meal combos (定食) usually include rice, miso soup, and a main — estimate 600–800 kcal total.
+            - Respond with item names in Japanese (kanji/kana) with English in parentheses.
+            - Write all descriptions and analysis in Japanese (日本語).
+            """
+        case .thai:
+            languageInstruction = "This may be a Thai menu. Recognize Thai script dish names. Write descriptions in Thai."
+        case .english:
+            languageInstruction = "Write all descriptions and analysis in English."
+        }
+
         let prompt = """
         You are a nutritionist and food expert analyzing a menu. Based on the following menu text, provide recommendations in JSON format.
 
         Menu Text:
         \(menuText)
+
+        \(languageInstruction)
 
         Please analyze and return a JSON response with:
         1. "healthiest": Array of top 3 healthiest options with details
@@ -168,7 +181,7 @@ class MenuAnalysisService {
         return recommendations
     }
 
-    private func getSpecificRecommendation(menuText: String, type: String) async throws -> String {
+    private func getSpecificRecommendation(menuText: String, type: String, language: AppLanguage = .english) async throws -> String {
         let recommendationPrompt: String
         switch type {
         case "healthiest":
@@ -183,6 +196,20 @@ class MenuAnalysisService {
             recommendationPrompt = "Recommend the best option from this menu."
         }
 
+        let languageInstruction: String
+        switch language {
+        case .japanese:
+            languageInstruction = """
+            This is likely a Japanese menu. Recognize kanji/kana dish names accurately.
+            Respond entirely in Japanese (日本語). Use dish names in Japanese (kanji/kana) with English in parentheses where helpful.
+            Reference Japanese nutritional context where relevant (e.g., 一汁三菜 balance, typical 定食 composition).
+            """
+        case .thai:
+            languageInstruction = "This may be a Thai menu. Respond in Thai. Recognize Thai dish names."
+        case .english:
+            languageInstruction = "Respond in English."
+        }
+
         let prompt = """
         You are a friendly nutritionist and food expert. Analyze this menu and provide a conversational recommendation.
 
@@ -191,8 +218,10 @@ class MenuAnalysisService {
 
         Task: \(recommendationPrompt)
 
+        \(languageInstruction)
+
         For each recommendation, include:
-        - Dish name (in bold if possible)
+        - Dish name
         - Why it's a great choice
         - Estimated calories
         - Key nutrients (protein, carbs, fat, fiber)

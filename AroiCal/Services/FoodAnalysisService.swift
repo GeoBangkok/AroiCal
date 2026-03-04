@@ -57,17 +57,38 @@ class FoodAnalysisService {
 
     private let apiKey = Config.openAIAPIKey
 
-    func analyzeFood(imageData: Data?) async throws -> FoodEntry {
+    func analyzeFood(imageData: Data?, language: AppLanguage = .english) async throws -> FoodEntry {
         guard let imageData = imageData else {
             throw FoodAnalysisError.noImageData
         }
 
         let base64 = imageData.base64EncodedString()
 
+        let languageHint: String
+        switch language {
+        case .japanese:
+            languageHint = """
+            This user is Japanese. Follow these rules strictly:
+            - For "nameJapanese": use authentic Japanese kanji/kana (e.g., 親子丼 not 'oyakodon', ラーメン not 'ramen', おにぎり not 'onigiri'). Never use romaji for Japanese food names.
+            - For "servingSize": use Japanese conventions (e.g., 1人前, 1杯, 1膳, 1皿, 1本, 100g).
+            - Japanese portions are typically smaller than Western portions — calibrate calorie estimates accordingly. A typical Japanese meal is 400–600 kcal.
+            - Be highly accurate for: washoku (和食), yoshoku (洋食), ramen, sushi/sashimi, bento (弁当), izakaya dishes, convenience store items (コンビニ), udon, soba, tempura, yakitori, onigiri, miso soup, rice dishes.
+            - For "name" (English): provide a clear English translation, not just romanization.
+            """
+        case .thai:
+            languageHint = """
+            Be highly accurate for Thai cuisine. Thai portions may differ from Western standards.
+            For "nameThai": use proper Thai script. Typical Thai meal: 300–700 kcal.
+            """
+        case .english:
+            languageHint = "Be accurate for all cuisines. Estimate realistic portions."
+        }
+
         let prompt = """
         Analyze this food image. Return ONLY a JSON object with these exact fields:
-        {"name": "English name", "nameThai": "Thai name", "nameJapanese": "Japanese name", "calories": number, "protein": number, "carbs": number, "fat": number, "servingSize": "portion description"}
-        Estimate the nutritional values per visible serving. Be accurate for Thai, Japanese, and international foods.
+        {"name": "English name", "nameThai": "Thai name", "nameJapanese": "Japanese name in kanji/kana", "calories": number, "protein": number, "carbs": number, "fat": number, "servingSize": "portion description"}
+        Estimate the nutritional values per visible serving.
+        \(languageHint)
         """
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)

@@ -54,4 +54,22 @@ class LanguageManager {
         case .japanese: return "ja"
         }
     }
+
+    /// Extra line spacing for languages that need more vertical breathing room.
+    /// Japanese kanji are dense square glyphs — 4pt extra spacing improves readability.
+    var lineSpacingAdjust: CGFloat {
+        switch current {
+        case .japanese: return 4
+        case .thai:     return 2
+        case .english:  return 0
+        }
+    }
+
+    /// Minimum scale factor for labels. Japanese text should not shrink as aggressively.
+    var minimumScaleFactor: CGFloat {
+        switch current {
+        case .japanese: return 0.85
+        default:        return 0.75
+        }
+    }
 }

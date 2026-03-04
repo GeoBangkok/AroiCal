@@ -213,7 +213,9 @@ struct ManualFoodEntryView: View {
             protein: proteinValue,
             carbs: carbsValue,
             fat: fatValue,
-            servingSize: servingSize.trimmingCharacters(in: .whitespaces).isEmpty ? "1 serving" : servingSize,
+            servingSize: servingSize.trimmingCharacters(in: .whitespaces).isEmpty
+                ? lang.t("1 serving", thai: "1 ที่", japanese: "1人前")
+                : servingSize,
             imageData: nil,
             date: Date()
         )

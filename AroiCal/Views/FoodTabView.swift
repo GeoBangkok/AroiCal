@@ -126,7 +126,7 @@ struct FoodTabView: View {
                     showManualEntry = true
                 }
             }
-            .alert("Analysis Failed", isPresented: $showError) {
+            .alert(lang.t("Analysis Failed", thai: "การวิเคราะห์ล้มเหลว", japanese: "分析に失敗しました"), isPresented: $showError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(errorMessage)
@@ -222,10 +222,12 @@ struct FoodTabView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(lang.t("Congrats! \(streak) Day Streak!", thai: "ยินดีด้วย! สตรีค \(streak) วัน!", japanese: "おめでとう！\(streak)日連続！"))
                     .font(.subheadline.weight(.bold))
+                    .lineSpacing(lang.lineSpacingAdjust)
 
                 Text(lang.t("Keep logging to maintain your streak", thai: "บันทึกต่อเพื่อรักษาสตรีคของคุณ", japanese: "ストリークを維持するために記録を続けよう"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineSpacing(lang.lineSpacingAdjust)
             }
 
             Spacer()
@@ -386,7 +388,7 @@ struct FoodTabView: View {
         let service = FoodAnalysisService()
 
         do {
-            let entry = try await service.analyzeFood(imageData: imageData)
+            let entry = try await service.analyzeFood(imageData: imageData, language: lang.current)
             scannedEntry = entry
             showResult = true
         } catch {
@@ -621,6 +623,7 @@ struct FoodEntryCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(displayName)
                         .font(.subheadline.weight(.semibold))
+                        .lineSpacing(lang.lineSpacingAdjust)
 
                     HStack(spacing: 10) {
                         macroLabel("P", value: entry.protein, color: Color(red: 0.35, green: 0.67, blue: 1))
@@ -738,6 +741,7 @@ struct AnalyzingOverlay: View {
                     Text(lang.t("Analyzing your food...", thai: "กำลังวิเคราะห์อาหาร...", japanese: "食べ物を分析中..."))
                         .font(.headline)
                         .foregroundStyle(.white)
+                        .lineSpacing(lang.lineSpacingAdjust)
 
                     Text("\(Int(progressValue * 100))%")
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
